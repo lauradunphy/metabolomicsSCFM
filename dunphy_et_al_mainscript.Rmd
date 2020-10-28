@@ -1,0 +1,1513 @@
+---
+title: "draft_figures"
+author: "Laura Dunphy"
+date: "August 12, 2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Draft figures for the metabolomics paper (in no particular order)
+
+Load Packages
+```{r, message=FALSE, warning=FALSE, result=FALSE, echo=FALSE}
+library(readr)
+library(dplyr)
+library(ggplot2)
+library(ggthemes)
+library(tidyr)
+library(viridis)
+library(gridExtra)
+library(grid)
+library(knitr)
+library(reshape2)
+library(gplots)
+library(RColorBrewer)
+library(ggsignif)
+library(cowplot)
+library(ggpubr)
+library(gtable)
+library(png)
+library(tiff)
+library(scales)
+# library(growthcurver)
+library(tibble)
+library(vegan)
+library(ape)
+library(randomForest)
+library(AUCRF)
+library(cluster)
+library(ggdendro)
+library(UpSetR)
+library(ggplotify)
+library(growthrates)
+```
+
+Draft Figure: Antibiotic Susceptibility and Phylogeney of P. aeruginosa and S. aureus strains
+
+```{r, message=FALSE, warning=FALSE, result=FALSE, echo=FALSE}
+# Load the experimental design figure:
+Fig_Experimental_Design <- readPNG('../manuscript_figures/experimental_design_rough5_2.png')
+Fig_Experimental_Design <- rasterGrob(Fig_Experimental_Design, interpolate = TRUE)
+
+# Load the data
+MIC_PA_CDC <- read_csv('data/p_aeruginosa_CDC_panel_MICs.csv')
+
+MIC_SA_CDC <- read_csv('data/staph_borderline_oxacillin_panel_MICs.csv')
+
+MIC_PA_LAB <- read_csv('data/antibiotic_clinical_micro_results_Pilot1_PA.csv')
+
+MIC_SA_LAB <- read_csv('data/antibiotic_clinical_micro_results_SA.csv') 
+
+# Load Phylogenetic trees from PATRIC
+phy_tree_PA <- readPNG('data/pseudomonas_phylogeny.png')
+phy_tree_PA <- rasterGrob(phy_tree_PA, interpolate = TRUE)
+
+phy_tree_SA <- readPNG('data/staph_phylogeny.png')
+phy_tree_SA <- rasterGrob(phy_tree_SA, interpolate = TRUE)
+
+# Filter down to data for this figure
+MIC_PA_CDC_Metabolomics <- MIC_PA_CDC %>% 
+  filter(ARBankNum == 'ID_234'| ARBankNum == 'ID_249'| ARBankNum == 'ID_258') %>% 
+  mutate(Isolate = ARBankNum)
+MIC_SA_CDC_Metabolomics <- MIC_SA_CDC %>% 
+  filter(ARBankNum == 'ID_474' | ARBankNum == 'ID_484') %>% 
+  mutate(Isolate = ARBankNum)
+MIC_PA_LAB_Metabolomics <- MIC_PA_LAB %>% 
+  filter(lineage == 'Ancestor'|lineage == 'Isogenic') %>% 
+  mutate(Interpretation = susceptibility, DrugName = antibiotic, Isolate = lineage) %>% 
+  select(ID, OrganismName, MIC, Interpretation,DrugName, Isolate)
+#MIC_PA_LAB_Metabolomics$DrugName <- factor(MIC_PA_LAB_Metabolomics$DrugName, levels = c("Amikacin","Aztreonam","Cefepime","Ciprofloxacin","Gentamicin","Meropenem","PIP_TAZ", "Tobramycin"), labels = c("Amikacin","Aztreonam","Cefepime","Ciprofloxacin","Gentamicin","Meropenem","Piperacillin/tazobactam", "Tobramycin"), ordered = TRUE)
+MIC_SA_LAB_Metabolomics <- MIC_SA_LAB
+
+# Combine datasets 
+CDC_MIC <- bind_rows(MIC_PA_CDC_Metabolomics, MIC_SA_CDC_Metabolomics)
+LAB_MIC <- bind_rows(MIC_PA_LAB_Metabolomics, MIC_SA_LAB_Metabolomics) 
+MIC_dat <- bind_rows(CDC_MIC, LAB_MIC)
+
+# Factor SIR Interpretation and Isolate
+MIC_dat$Interpretation <- factor(MIC_dat$Interpretation, levels = c('S','I','R', 'NS'), ordered = TRUE)
+MIC_dat$Isolate <- factor(MIC_dat$Isolate, levels = rev(c('Isogenic','Ancestor','ID_258','ID_234','ID_249','ATCC 29213','USA300','ID_484','ID_474')), labels = rev(c('Isogenic','SCFM-evolved','CDC 258','CDC 234','CDC 249','ATCC 29213','USA300','CDC 484','CDC 474')), ordered = TRUE)
+
+
+# Plot susceptibilitiy figure
+fig_MIC_PA <- MIC_dat %>% filter(OrganismName == 'Pseudomonas aeruginosa', DrugName != 'Imipenem+chelators', DrugName !='Ceftolozane/tazobactam', DrugName != 'Doripenem') %>% 
+  ggplot(aes(DrugName, Isolate, fill = Interpretation)) + geom_tile(color = 'black') + theme_bw(base_size = 8) +
+  scale_fill_manual(values = c('blue','red'), name ="Susceptibility", breaks = c('S','R'), labels = c("Sensitive", "Resistant")) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1), legend.position = 'none', axis.title = element_blank()) #+ xlab('Antibiotic')
+
+
+fig_MIC_SA <- MIC_dat %>% filter(OrganismName == 'Staphylococcus aureus', DrugName != 'Mupirocin', DrugName != 'Cefoxitin') %>% 
+  ggplot(aes(DrugName, Isolate, fill = Interpretation)) + geom_tile(color = 'black') + theme_bw(base_size = 8) +
+  scale_fill_manual(values = c('blue','grey95','red','darkred'), name ="Susceptibility", breaks = c('S','I','R', 'NS'), labels = c("Sensitive","Intermediate","Resistant", "Not Sensitive")) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1), legend.position = 'right', axis.title = element_blank(), legend.text = element_text(size = 6), legend.title = element_text(size = 7),
+        legend.key.size = unit(0.1, 'in')) #+ xlab('Antibiotic')
+
+fig_MIC_SA_legend = get_legend(fig_MIC_SA)
+
+
+# Arrange figure (MIC only)
+Figure_MIC <- arrangeGrob(fig_MIC_PA, # figure 1
+                          fig_MIC_SA+theme(legend.position = 'none'), # figure 2
+                          fig_MIC_SA_legend, # figure 3
+                          ncol=2, # number of columns
+                          nrow =4, # number of rows
+                          heights=c(0.25, 0.3,0.05,0.4),  
+                          widths = c(0.75, 0.25),
+                          layout_matrix=cbind(c(1,1,2,2), c(NA,3,3,NA)))
+
+Figure_MIC <- as_ggplot(Figure_MIC) +
+   draw_plot_label(label = c("C","D"), size = 10,
+                   x = c(0,0), y = c(1,0.5))
+Figure_MIC
+
+
+# Save figure MIC only
+# ggsave('../manuscript_figures/Figure_MIC.png',Figure_MIC, dpi = 300, width = 3.42, height = 3, units = 'in')
+
+# Arrange Figure - First designate how you would like each subplot to be arranged
+Figure_MIC_TREE <- arrangeGrob(phy_tree_PA, # figure 1
+                               phy_tree_SA, # figure 2
+                               fig_MIC_PA, # figure 3
+                               fig_MIC_SA+theme(legend.position = 'none'), # figure 4
+                               fig_MIC_SA_legend, # figure 5 (just the legend)
+                               Fig_Experimental_Design, # figure 6 (experimental design)
+                               ncol=3, # number of total columns I want (the legend here has it's own column)
+                               nrow = 8, # number of total rows I want (I have 6 because I wanted the legend to be in the center third of the figure)
+                               heights=c(0.56,0.05,0.25, 0.20,0.05,0.05,0.05,0.4), # relative heights of each row; default is to split them evenly
+                               widths = c(0.5, 0.75, 0.25), # relative widths of each row; default is to split them evenly
+                               layout_matrix = cbind(c(6,NA,1,1,1,2,2,2), c(6,NA,3,3,3,3,4,4), c(6,NA,NA,5,5,5,5,NA))) # use cbind or rbind to say which figures you want in which positions; index relates to the order of the figures inputted into the function. (e.g. 1 denotes phy_tree_PA)
+
+# Next, convert to a ggplot object and add labels
+Figure_MIC_TREE <- as_ggplot(Figure_MIC_TREE) +
+   draw_plot_label(label = c("A","B","C","D","E"), size = 10,
+                   x = c(0,0,0.33, 0,0.33), y = c(1,0.64, 0.64, 0.31, 0.31))
+
+Figure_MIC_TREE
+
+# Save figure (MIC and trees)
+ggsave('figures_and_supplement/Figure1.png',Figure_MIC_TREE, dpi = 300, width = 6.5, height = 6.14, units = 'in')
+
+
+```
+
+
+Draft Supplemental Figure: CFU/mL (0h, 24h) and OD600 (24h) of all replicates and all strains 
+```{r, message=FALSE, warning=FALSE, result=FALSE, echo=FALSE}
+# Update as you collect more metadata
+
+# Load data (always add data to excel and save as csv)
+metabolomics_metadata_raw <- read_csv('data/metabolomics_metadata.csv')
+
+# Tidy data
+metabolomics_metadata <- metabolomics_metadata_raw %>% filter(replicate != 'R0', replicate != 'P1') 
+
+# Plot 24h OD600(raw without background subtraction)
+# NOTE: would like to add line for median and errorbars with IQ range
+Fig_OD600_24h <- metabolomics_metadata %>%
+  group_by(sampleName) %>% 
+  mutate(median_OD600 = median(OD600_24h), IQ25 = quantile(OD600_24h, 0.25), IQ75 = quantile(OD600_24h, 0.75)) %>% 
+  ungroup() %>% 
+  ggplot(aes(sampleName, OD600_24h, color = replicate)) + 
+  geom_point(alpha = 0.5) + geom_pointrange(aes(y = median_OD600, ymin = IQ25, ymax = IQ75), color = 'black', size = 0.25) +
+  theme_pubr() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 8), axis.text.y = element_text(size = 14)) +
+  ylab('OD600') + xlab('')
+Fig_OD600_24h
+
+# Tidy data of CFU/mL for t = 0 and t = 24 and add 1 to all CFU/mL counts to avoid log10(0)
+metabolomics_metadata_CFU <- metabolomics_metadata %>% select(project, replicate, sample, sampleName, sampleNameiLab, species, average_0h_CFU, average_24h_CFU) %>% 
+  gather(time, CFU_mL, 7:8) %>% 
+  mutate(CFU_mL_plus_1 = CFU_mL + 1)
+metabolomics_metadata_CFU$time[metabolomics_metadata_CFU$time == 'average_0h_CFU'] <- 0
+metabolomics_metadata_CFU$time[metabolomics_metadata_CFU$time == 'average_24h_CFU'] <- 24
+metabolomics_metadata_CFU$time <- as.numeric(metabolomics_metadata_CFU$time)
+
+# Plot 0h and 24h CFU/mL (show all biological replicates)
+# stat summary shows median
+# Removed facets because they line up with B...consider adding back or at least double check they are in same order before publishing
+# NEED TO DOUBLE CHECK ERROR BARS BEFORE PUBLISHING
+Fig_CFU_mL_all_replicates <- metabolomics_metadata_CFU %>%
+  group_by(sampleName, time) %>%
+  mutate(median_CFU_mL_plus_1 = median(CFU_mL_plus_1), 
+         IQ25 = quantile(CFU_mL_plus_1, 0.25),
+         IQ75 = quantile(CFU_mL_plus_1, 0.75)) %>%
+  ungroup() %>% 
+  group_by(sampleNameiLab, replicate) %>% 
+  ggplot(aes(time, CFU_mL_plus_1, color = replicate)) + 
+  geom_point(alpha = 0.5) +  
+  geom_line(alpha = 0.5) + stat_summary(fun.y = median, geom='line', color = 'black') +
+  stat_summary(fun.y = median, geom='point', color = 'black') +
+  geom_errorbar(aes(x = time, ymin = IQ25, ymax = IQ75), width = 1, color = 'black') +
+  facet_wrap(~sampleName, nrow = 1) +
+  theme_pubr() + 
+  scale_y_log10(limits = c(1, 1e10)) +
+  theme(axis.text.y = element_text(size = 8), axis.text.x = element_text(size = 8), strip.background = element_blank(),
+  strip.text.x = element_blank()) +
+  scale_x_discrete(limits = c(0, 24)) +
+  ylab('log10(CFU/mL + 1)') + xlab('time (h)')
+Fig_CFU_mL_all_replicates
+
+# Plot 0h and 24h CFU/mL (median + IQR of all biological replicates) (note that CFU_ml for each replicate is taken from the mean counts across 4 technical replicates)
+# NOTE: not sure if the errorbars are correct with the log10 y axis...I think they are ok because they stick down more than up, but should confirm...
+Fig_CFU_mL_median <- metabolomics_metadata_CFU %>% 
+  group_by(sampleName, time) %>%
+  mutate(median_CFU_mL_plus_1 = median(CFU_mL_plus_1), IQ25 = quantile(CFU_mL_plus_1, 0.25), IQ75 = quantile(CFU_mL_plus_1, 0.75)) %>%
+  ungroup() %>% 
+  group_by(sampleName) %>% 
+  ggplot(aes(time, median_CFU_mL_plus_1), color = 'black') + 
+  geom_point() + 
+  geom_line() +
+  geom_errorbar(aes(x = time, ymin = IQ25, ymax = IQ75), width = 1) +
+  facet_wrap(~sampleName, nrow = 2) +
+  theme_pubr() + 
+  scale_y_log10(limits = c(1, 1e10)) +
+  ylab('log10(CFU/mL + 1)') + xlab('time (h)')
+Fig_CFU_mL_median
+
+# Arrange figure: 
+Figure_CFU_OD600 <- arrangeGrob(Fig_CFU_mL_all_replicates + theme(legend.position = 'none'), Fig_OD600_24h+theme(legend.position = 'none'), ncol=1, nrow =2, heights=c(0.45,0.55), layout_matrix=rbind(c(1), c(2)))
+
+Figure_CFU_OD600 <- as_ggplot(Figure_CFU_OD600) +
+   draw_plot_label(label = c("A","B"), size = 10,
+                   x = c(0,0), y = c(1,0.55))
+Figure_CFU_OD600
+
+
+ggsave('figures_and_supplement/FigureS3.png', Figure_CFU_OD600, dpi = 300, width = 7, height = 5, units = 'in')
+
+```
+
+
+
+METABOLOMICS ANALYSIS
+
+Analysis: metabolomics take 2 (8/12/2020)
+- Updated data from Nishi removing duplicates
+- Load data
+- filter best metabolites (score mzCloud >= 60 or score mzVault >= 60..can update threshold as needed)
+- remove blank and pooled samples
+- consolidate positive and negative modes and sample key into single dataset (retain positive if metabolite in both modes) (metabolomics_tidy)
+
+```{r, message=FALSE, warning=FALSE, result=FALSE, echo=FALSE}
+# 1. Load data
+  # Positive mode (key does not line up with these samples...need to figure this out...)
+metabolomics_positive_raw <- read_csv('data/Laura_pos_Mode_Final1_051220.csv')
+  # Negative mode
+metabolomics_negative_raw <- read_csv('data/Laura_neg_mode_Final_051220.csv')
+  # Sample key (updated and confirmed by Nishi)
+metabolomics_sample_key <- read_csv('data/sample_key_ljd2.csv')
+ 
+# 2. Remove 'Area: ' and (F##) from after fileNames (Nishi confirmed that the raw files are what are associated with the samples)
+names(metabolomics_positive_raw) <- sub("raw.*", "raw", names(metabolomics_positive_raw))
+names(metabolomics_positive_raw) <- sub("Area: ", "", names(metabolomics_positive_raw))
+names(metabolomics_positive_raw) <- sub("Norm. ", "Norm. Area: ", names(metabolomics_positive_raw))
+
+names(metabolomics_negative_raw) <- sub("raw.*", "raw", names(metabolomics_negative_raw))
+names(metabolomics_negative_raw) <- sub("Area: ", "", names(metabolomics_negative_raw))
+names(metabolomics_negative_raw) <- sub("Norm. ", "Norm. Area: ", names(metabolomics_negative_raw))
+
+# 3. Filter named metabolites by quality
+  # Keep metabolites if:
+    # mzCloud score >= threshold OR mzVault score >= threshold
+    # mzVault contains library of ~550 compounds that the core had run
+    # Nishi recommends using a threshold of 60. Ben had previously recommended a threshold of 90. 
+    # MS2 != 'No MS2'...If MS2 != MS2, it means that the spectra has been confirmed in at least one of the following databases: KEGG/CHEMSPIDER/HDMB/MassBank
+threshold <- 60
+metabolomics_positive_thresh <- metabolomics_positive_raw %>%
+  filter(`mzVault Best Match` >= threshold | `mzCloud Best Match` >=threshold) %>% filter(MS2 != 'No MS2') %>% 
+  filter(!is.na(Name))
+metabolomics_negative_thresh <- metabolomics_negative_raw %>% filter(MS2 != 'No MS2') %>% 
+  filter(`mzVault Best Match` >= threshold | `mzCloud Best Match` >=threshold)%>% filter(!is.na(Name))
+
+# 4. Consolidate datasets and sample key: (NOTE THESE ARE INDEXED MANUALLY)
+# Gather sample areas:
+metabolomics_positive_thresh_tidy <- metabolomics_positive_thresh[,1:92] %>% gather('fileName','Area', 16:92)
+metabolomics_negative_thresh_tidy <- metabolomics_negative_thresh[,1:91] %>% gather('fileName','Area', 16:91)
+# Combine positive and negative
+metabolomics_thresh <- rbind(metabolomics_positive_thresh_tidy, metabolomics_negative_thresh_tidy)
+# Combine with key and remove blanks and only take named metabolites: (Note: pooled samples and blanks removed at this stage)
+metabolomics_thresh_named <- full_join(metabolomics_thresh, metabolomics_sample_key, by = 'fileName') %>% filter(!is.na(Name), !is.na(strain))
+# Add KEGG IDs to metabolites that are missing them:
+  # Load KEGG ID KEY
+additionalKEGG <- read_csv('data/additional_kegg_id.csv') %>%
+  select(-KEGG_ID_Found) %>% filter(!is.na(KEGG_ID_New)) %>% select(Name, KEGG_ID_New)
+  # Add KEGG IDs
+metabolomics_thresh_named <- metabolomics_thresh_named %>% full_join(additionalKEGG, by = 'Name') %>% 
+  mutate(KEGG_ID = case_when(!is.na(KEGG_ID_New) ~ KEGG_ID_New,
+                               TRUE ~ KEGG_ID)) %>% select(-KEGG_ID_New)
+
+
+# 5. Reconcile metabolites in both positive and negative mode 
+  # Keep metabolite in positive mode and discard in negative mode
+    # Compare names
+    # Compare KEGG ID (3 metabolites with slightly different names but same kegg id, different charges)
+    # Compare formula if KEGG ID is NA (Only one was n_P372 and n_P416 are same...only issue but these have different pubchem IDs so they are ok to both be there (one DL the other just L))
+  # metabolomics_tidy should be dataframe used for any raw data analyses
+repeatMetabolites <- (metabolomics_thresh_named %>% group_by(Name) %>% mutate(n = n()) %>% filter(n == 140, charge == 'negative'))
+metabolomics_almost_tidy <- anti_join(metabolomics_thresh_named,repeatMetabolites)
+repeatKEGG <- metabolomics_almost_tidy %>% group_by(Name, KEGG_ID, charge) %>% summarise() %>% group_by(KEGG_ID) %>% mutate(n = n()) %>% filter(n>1, !is.na(KEGG_ID), charge == 'negative') 
+metabolomics_tidy <- metabolomics_almost_tidy %>% filter(!Name %in% repeatKEGG$Name)
+
+
+# 6. Normalize metabolomics data (based on Anna's dissertation and discussions with Bonnie)
+  # 1. Take log2 of raw areas
+  # 2. Mean-center log2 values within each metabolite
+metabolomics_normalized <- metabolomics_tidy %>% 
+  ungroup() %>% 
+  mutate(log2Area = log2(Area)) %>% 
+  group_by(Peak, Name) %>% 
+  mutate(meanLog2Area = mean(log2Area), normalizedArea = log2Area - meanLog2Area)
+
+# 7. Identify significant changes
+  # 1. Wilcoxon rank sum test against SCFM control for each metabolite, all strains
+  # 2. BH correction for multiple hypothesis testing
+  # 3. Denote significance with asterisks (* P < 0.05, ** P < 0.01, *** P < 0.001)
+# Initialize dataframes to perform testing
+strains <- unique(metabolomics_tidy %>% filter(strain != 'SCFM_control') %>% select(strain))$strain
+metabolite_peaks <- unique(metabolomics_tidy %>% select(Peak))$Peak
+metabolomics_normalized_minimal <- metabolomics_normalized %>% select(Name, Peak, sampleNameOrig, strain, normalizedArea)
+metabolomics_statistics <- data.frame(matrix(ncol = 4, nrow = (length(strains) * length(metabolite_peaks))))
+colnames(metabolomics_statistics) <- c('strain','strain 2','Peak', 'pvalue_unadjusted')
+testNum <- 1
+# Calculate wilcoxon rank sum pvalue for all strain-SCFM combinations for all metabolites
+for (metabolite in metabolite_peaks){
+  for (s in strains) {
+  wilcox_test_dat <- metabolomics_normalized_minimal %>% 
+    filter(Peak == metabolite, strain %in% c(s, 'SCFM_control')) %>% 
+    mutate(strain = factor(strain))
+  pvalue <- wilcox.test(wilcox_test_dat$normalizedArea~wilcox_test_dat$strain, exact = FALSE)$p.value
+  metabolomics_statistics[testNum,] = c(s, 'SCFM_control',metabolite, pvalue)
+  testNum <- testNum + 1
+  }
+}
+# BH Correction and denote significance levels:
+metabolomics_statistics <- metabolomics_statistics %>% mutate(pvalue_BH_corrected = p.adjust(pvalue_unadjusted, method = 'BH'),
+                                   asterisks_BH_corrected = case_when(#pvalue_BH_corrected <= 0.001 ~ '***',
+                                                                      #pvalue_BH_corrected <= 0.01 ~ '**',
+                                                                      pvalue_BH_corrected < 0.05 ~ '*',
+                                                                      TRUE ~ ''))
+
+# 8. Calculate log2 fold changes between strains and SCFM (with significance of change denoted)
+metabolomics_log2FC <- metabolomics_tidy %>% 
+  group_by(Peak, Name, strain, species, KEGG_ID, Formula) %>% 
+  summarise(medianArea = median(Area)) %>% 
+  ungroup() %>% 
+  group_by(Peak,Name) %>% 
+  mutate(log2FC = log2(medianArea/(medianArea[strain == 'SCFM_control']))) %>% 
+  inner_join((metabolomics_statistics %>% select(strain, Peak, pvalue_BH_corrected, asterisks_BH_corrected)), by = c('strain','Peak'))
+
+# 9. Calculate median(CFU/mL) for each strain (24h) and rename to be consistent with metabolomics data
+metabolomics_CFU <- metabolomics_metadata_CFU %>% ungroup() %>% filter(time == 24) %>% group_by(sampleName) %>% summarise(medianCFUmL_24h = median(CFU_mL)) %>% 
+  filter(sampleName != 'SCFM Media Control') %>% 
+  mutate(strain = factor(sampleName, levels = rev(c('PA Isogenic','PA Evolved Anc','PA CDC ID 258','PA CDC ID 234','PA CDC ID 249','SA ATCC 29213','SA USA300','SA CDC ID 484','SA CDC ID 474')), 
+                         labels = rev(c('PA Isogenic','PA SCFM-Evolved','PA CDC 258','PA CDC 234','PA CDC 249','SA ATCC 29213','SA USA300','SA CDC 484','SA CDC 474')), 
+                         ordered = TRUE)) %>% select(-sampleName)
+
+ # Check with originial sample Key and all lines up!
+# metabolomics_sample_key_orig <- read_csv('../Individual_spent/metabolomics/final_data/sample_key_ljd.csv')
+# metabolomics_sample_key_orig$fileName2 <- metabolomics_sample_key_orig$fileName
+# metabolomics_sample_key_orig$fileName <- sub("raw.*", "raw", metabolomics_sample_key_orig$fileName) 
+# metabolomics_sample_key_orig$fileName <- sub('Area: ','',metabolomics_sample_key_orig$fileName)
+# inner_join(metabolomics_sample_key_orig, (metabolomics_sample_key %>% select(-charge)))
+
+```
+
+Suppelmental Figure: Glucose Consumption
+
+```{r, message=FALSE, warning=FALSE, result=FALSE, echo=FALSE}
+
+### B: Relative glucose consumption 
+# Load the Data: 
+Glucose_dat <- read_csv('data/QubitData__10_31_2019_Final.csv')
+
+# Factor strain names
+Glucose_dat$strain <- factor(Glucose_dat$strain, 
+                               levels = c('scfm', 'isogenic','scfm_evolved_isogenic','CDC_258','CDC_234','CDC_249','ATCC_29213','USA300','CDC_484','CDC_474'),
+                               labels = c('SCFM', 'PA Isogenic','PA SCFM-Evolved','PA CDC 258','PA CDC 234','PA CDC 249','SA ATCC 29213','SA USA300','SA CDC 484','SA CDC 474'),
+                               ordered = TRUE)
+
+# Remove unwanted measurements (below limit of detection)
+# Calculate glucose concentration of supernatant (Qubit conc * totalQubitVolume/sampleVolume * DF)
+# Calculate relative glucose consumption by replicate (1 - glucose concentration/starting SCFM concentration) 
+# Calculate median and IQR of relative glucose
+Glucose_Final <- Glucose_dat %>% filter(as.numeric(Qubit_tube_conc) >= 3, Qubit_tube_conc != 'Out of range') %>%
+  mutate(glucose_conc_final = (as.numeric(Qubit_tube_conc) * (totalQubitVolume/sampleVolume) * DF)) %>% 
+  group_by(replicate) %>% 
+  mutate(relative_glucose_consumption = 1 - glucose_conc_final/(glucose_conc_final[strain == 'SCFM'])) %>% 
+  ungroup() %>% group_by(strain) %>% 
+  mutate(median_RGC = median(relative_glucose_consumption), IQ25_RGC = quantile(relative_glucose_consumption, 0.25), IQ75_RGC = quantile(relative_glucose_consumption, 0.75))
+
+# Plot Relative Glucose Concentration by strain with median and IQR shown
+Fig_Relative_Glucose <- Glucose_Final %>% 
+  filter(strain != 'SCFM') %>% 
+  ggplot(aes(strain, relative_glucose_consumption)) +
+  geom_point(alpha = 0.25, size = 2) +
+  geom_pointrange(aes(y = median_RGC, ymin = IQ25_RGC, ymax = IQ75_RGC), color = 'black', size = 0.25) +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 8), axis.text.y = element_text(size = 8), axis.title.x = element_blank(), axis.title.y = element_text(size = 9),
+        panel.grid.major = element_blank(), panel.grid.minor = element_blank()) +
+  ylab('Relative Glucose Consumption') + ylim(0.4,1)
+
+
+ggsave('figures_and_supplement/FigureS4.png', Fig_Relative_Glucose, dpi = 300, width = 3, height = 3, units = 'in')
+```
+
+Draft Figure: Changes in metabolome following growth in SCFM
+```{r, message=FALSE, warning=FALSE, result=FALSE, echo=FALSE}
+### A: Metabolomics heatmap for all strains (metabolites significant in at least one strain)
+# Filter down to significant metabolites
+metabolites_signficant <- metabolomics_log2FC %>% filter(pvalue_BH_corrected <= 0.05) %>% group_by(Name) %>% summarise()
+metabolomics_heatmap_dat <- metabolomics_log2FC %>% filter(Name %in% metabolites_signficant$Name) %>% 
+  mutate(strain = factor(strain, 
+                         levels = rev(c('Isogenic','SCFM_evolved','CDC_ID_258','CDC_ID_234','CDC_ID_249','ATCC_29213','USA300','CDC_ID_484','CDC_ID_474')),
+                         labels = rev(c('PA Isogenic','PA SCFM-Evolved','PA CDC 258','PA CDC 234','PA CDC 249','SA ATCC 29213','SA USA300','SA CDC 484','SA CDC 474')), ordered = TRUE)) %>% 
+  # inner_join(metabolomics_CFU, by = 'strain') %>%
+  arrange(Peak)
+# Cluster metabolites (euclidean distance with complete linkage)
+# See this link for more info: https://towardsdatascience.com/hierarchical-clustering-on-categorical-data-in-r-a27e578f2995 
+# Format data
+metabolomics_pre_dist <- metabolomics_heatmap_dat %>%
+  ungroup() %>% 
+  select(Peak,Name, strain, log2FC) %>%
+  spread(strain,log2FC) %>% 
+  arrange(Peak)
+# Caluclate euclidean distance 
+metabolite_dist <- daisy(metabolomics_pre_dist[,3:ncol(metabolomics_pre_dist)], metric = c("euclidean"))
+# Cluster (agglomerative with complete linkage) and factor data accordingly
+clust.res<-hclust(metabolite_dist, method = 'complete')
+hcdata <- dendro_data(clust.res, type="rectangle")
+metabolomics_heatmap_dat$Peak <- factor(metabolomics_heatmap_dat$Peak, levels = c((metabolomics_heatmap_dat$Peak %>% unique())[as.numeric((hcdata$labels)$label)]), ordered = TRUE)
+# Make Dendrogram (not currently on figure)
+# dendrogram_heatmap <- ggplot() +
+#   geom_segment(data=segment(hcdata), aes(x=x, y=y, xend=xend, yend=yend), size = 0.25) +
+#   ylab('Euclidean Distance') + theme_pubr() +
+#   theme(axis.line = element_blank(),axis.text.y=element_text(size = 6), axis.ticks=element_blank(), axis.title.x=element_blank(), axis.text.x = element_blank(), axis.title.y=element_text(size=6.5), plot.margin = unit(c(5.5,-13,-2.9,35),'pt')) # was (5.5,-13,-3.25,27)
+
+# Plot heatmap (log2FC values)
+ metabolomics_heatmap <- metabolomics_heatmap_dat %>%  ggplot(aes(Peak,strain, fill = log2FC)) + geom_tile() +
+  # geom_text(aes(label = asterisks_BH_corrected), size = 2) +
+  scale_fill_gradient2(low = 'blue',high = 'red',midpoint = 0, mid = 'white') + 
+  theme_bw() + theme(axis.text.x = element_blank(), 
+                     axis.title.y = element_blank(), 
+                     legend.position = 'top',
+                     legend.text = element_text(size = 6.5),
+                     legend.key.size = unit(0.2, 'in'),
+                     legend.title = element_text(size = 7),
+                     axis.title.x = element_text(size = 9),
+                     axis.text.y = element_text(size = 8)) + 
+   xlab('Metabolite') + guides(fill = guide_colourbar(title.position="top", 
+                                                      title = expression(paste("log2", bgroup('(',over(strain, SCFM),')'))),
+                                                      title.hjust = 0.5))
+
+
+### B) PCoA of all samples all metabolites
+# Arrange dataframe (row = sample, column = metabolite, value = raw area)
+metabolomicsPCoA <- metabolomics_tidy %>% select(Peak, sampleNameOrig,strain,species, Area) %>%  ungroup() %>% spread(key = 'Peak',value = 'Area') %>% arrange(sampleNameOrig)
+# Calculate Bray distances
+# metabolomicsPCoA_dist <- vegdist(scale(metabolomicsPCoA[,-1:-3]), method = 'euclidean')
+metabolomicsPCoA_dist <- vegdist(metabolomicsPCoA[,-1:-3], method = 'bray')
+# Define classes (species)
+metabolomicsPCoA_classes <- metabolomicsPCoA[,1:3] %>% mutate(species = factor(species, levels = c('SCFM_control','SA','PA'), labels = c('SCFM','SA','PA')))
+# Perform PCoA:
+solPCoA <- pcoa(metabolomicsPCoA_dist)
+# Calculate Percent Variance of PC1 and PC2
+  # Eigenvalue/sum(abs(all eigenvalues))
+  # Conservative calculation due to negative eigenvalues of large magnitude
+PCoA_percentVar <- round(solPCoA$values$Eigenvalues[1:2]/sum(abs(solPCoA$values$Eigenvalues)) * 100, 2)
+# Plot PCoA of Bray-Curtis dissimilarities, coloring by species (alternative would be euclidean distance of scaled data which captures less variance...)
+figPCoA <- as.data.frame(solPCoA$vectors[,1:2]) %>% 
+  cbind(metabolomicsPCoA_classes) %>% 
+  ggplot(aes(Axis.1, Axis.2)) + 
+  geom_point(shape = 21, color = 'black', aes(fill = species), size = 2, alpha = 0.75) +
+  theme_bw() +
+  scale_fill_manual(values = c('grey80','orange','green')) +
+  xlab(paste('PC 1 (',PCoA_percentVar[1], '%)')) +
+  ylab(paste('PC 2 (',PCoA_percentVar[2], '%)')) + 
+  theme(legend.position = c(0.125,0.1), legend.title = element_blank(), 
+        panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        legend.text = element_text(size = 6.5),
+        legend.key.size = unit(0.05, 'in'),
+        axis.title = element_text(size = 9),
+        axis.text = element_text(size = 8),
+        legend.background = element_blank())
+
+# Can try normalizing raw data by CFU/mL for PCoA
+# metabolomics_tidy_CFU <- inner_join(metabolomics_tidy, (metabolomics_metadata_CFU %>% filter(time == 24) %>% select(sample, replicate, CFU_mL_plus_1))) %>% ungroup() %>% 
+#   mutate(Area = Area/CFU_mL_plus_1)
+
+### C) PCoA of only PA strains:
+# Arrange dataframe (row = sample, column = metabolite, value = raw area)
+metabolomicsPCoA_PA <- metabolomics_tidy %>% select(Peak, sampleNameOrig,strain,species, Area) %>%  ungroup() %>% spread(key = 'Peak',value = 'Area') %>% arrange(sampleNameOrig) %>% 
+  filter(species == 'PA')
+# Calculate Bray distances
+# metabolomicsPCoA_dist <- vegdist(scale(metabolomicsPCoA[,-1:-3]), method = 'euclidean')
+metabolomicsPCoA_dist_PA <- vegdist(metabolomicsPCoA_PA[,-1:-3], method = 'bray')
+# Perform PCoA:
+solPCoA_PA <- pcoa(metabolomicsPCoA_dist_PA)
+# Calculate Percent Variance of PC1 and PC2
+  # Eigenvalue/sum(abs(all eigenvalues))
+  # Conservative calculation due to negative eigenvalues of large magnitude
+PCoA_percentVar_PA <- round(solPCoA_PA$values$Eigenvalues[1:2]/sum(abs(solPCoA_PA$values$Eigenvalues)) * 100, 2)
+# Plot PCoA of Bray-Curtis dissimilarities, coloring by species (alternative would be euclidean distance of scaled data which captures less variance...)
+figPCoA_PA <- as.data.frame(solPCoA_PA$vectors[,1:2]) %>% 
+  cbind((metabolomicsPCoA_classes %>% filter(species == 'PA'))) %>% 
+  mutate(strain = factor(strain, levels = c('Isogenic','SCFM_evolved','CDC_ID_258','CDC_ID_234','CDC_ID_249'),
+                         labels = c('Isogenic','SCFM-Evolved','CDC 258','CDC 234','CDC 249'),ordered = TRUE)) %>% 
+  ggplot(aes(Axis.1, Axis.2)) + 
+  geom_point(shape = 21, color = 'black', aes(fill = strain), size = 2, alpha = 0.75) +
+  theme_bw() +
+  scale_fill_manual(values = c('green','green3','forestgreen','lightseagreen','greenyellow' )) +
+  xlab(paste('PC 1 (',PCoA_percentVar_PA[1], '%)')) +
+  ylab(paste('PC 2 (',PCoA_percentVar_PA[2], '%)')) + 
+  theme(legend.position = c(0.225,0.15), legend.title = element_blank(), 
+        panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        legend.text = element_text(size = 6.5),
+        legend.key.size = unit(0.05, 'in'),
+        axis.title = element_text(size = 9),
+        axis.text = element_text(size = 8),
+        legend.background = element_blank())
+
+### D) PCoA of only SA strains:
+# Arrange dataframe (row = sample, column = metabolite, value = raw area)
+metabolomicsPCoA_SA <- metabolomics_tidy %>% select(Peak, sampleNameOrig,strain,species, Area) %>%  ungroup() %>% spread(key = 'Peak',value = 'Area') %>% arrange(sampleNameOrig) %>% 
+  filter(species == 'SA')
+# Calculate Bray distances
+metabolomicsPCoA_dist_SA <- vegdist(metabolomicsPCoA_SA[,-1:-3], method = 'bray')
+# Perform PCoA:
+solPCoA_SA <- pcoa(metabolomicsPCoA_dist_SA)
+# Calculate Percent Variance of PC1 and PC2
+  # Eigenvalue/sum(abs(all eigenvalues))
+  # Conservative calculation due to negative eigenvalues of large magnitude
+PCoA_percentVar_SA <- round(solPCoA_SA$values$Eigenvalues[1:2]/sum(abs(solPCoA_SA$values$Eigenvalues)) * 100, 2)
+# Plot PCoA of Bray-Curtis dissimilarities, coloring by species (alternative would be euclidean distance of scaled data which captures less variance...)
+figPCoA_SA <- as.data.frame(solPCoA_SA$vectors[,1:2]) %>% 
+  cbind((metabolomicsPCoA_classes %>% filter(species == 'SA'))) %>% 
+  mutate(strain = factor(strain, levels = c('ATCC_29213','USA300','CDC_ID_484','CDC_ID_474'), 
+                                  labels = c('ATCC 29213','USA300','CDC 484','CDC 474'),ordered = TRUE)) %>% 
+  ggplot(aes(Axis.1, Axis.2)) + 
+  geom_point(shape = 21, color = 'black', aes(fill = strain), size = 2, alpha = 0.75) +
+  theme_bw() +
+  scale_fill_manual(values =  c('orange','orange2','orange3','orange4')) +
+  xlab(paste('PC 1 (',PCoA_percentVar_SA[1], '%)')) +
+  ylab(paste('PC 2 (',PCoA_percentVar_SA[2], '%)')) + 
+  theme(legend.position = c(0.2,0.125), legend.title = element_blank(), 
+        panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        legend.text = element_text(size = 6.5),
+        legend.key.size = unit(0.05, 'in'),
+        axis.title = element_text(size = 9),
+        axis.text = element_text(size = 8),
+        legend.background = element_blank())
+
+# ARRANGE COMPLETE FIGURE:
+Figure_Metabolites <- arrangeGrob(metabolomics_heatmap,figPCoA,figPCoA_PA, figPCoA_SA,
+                                  ncol=3, nrow =2, heights=c(3,2.52), widths=c(0.33,0.33,0.33), 
+                                  layout_matrix=rbind(c(1,1,1), c(2,3,4)))
+
+Figure_Metabolites <- as_ggplot(Figure_Metabolites) +
+   draw_plot_label(label = c("A","B", "C", "D", 'consumed','produced'), size = c(10,10,10,10,7,7),
+                   x = c(0,0, 0.33,0.67, 0.39,0.61), y = c(0.85,0.475,0.475,0.475,0.9,0.9))
+Figure_Metabolites
+
+
+ggsave('figures_and_supplement/Figure2.png', Figure_Metabolites, dpi = 300, width = 7.5, height = 5.52, units = 'in')
+
+  
+
+```
+
+
+Draft figure: Comparative analysis of strains within each species
+
+```{r, message=FALSE, warning=FALSE, result=FALSE, echo=FALSE}
+# Figure: comparative analysis of metabolite production/consumption by strains
+
+# Metabolites produced by each strain: (p <= 0.05, log2FC > 0)
+  # PA strains
+    # Isogenic:
+      PA_isogenic_produced <- (metabolomics_log2FC %>% filter(strain == 'Isogenic', log2FC > 0, pvalue_BH_corrected <= 0.05))$Peak
+    # SCFM_evolved:
+      PA_SCFM_evolved_produced <- (metabolomics_log2FC %>% filter(strain == 'SCFM_evolved', log2FC > 0, pvalue_BH_corrected <= 0.05))$Peak
+    # CDC ID 258:
+      PA_258_produced <- (metabolomics_log2FC %>% filter(strain == 'CDC_ID_258', log2FC > 0, pvalue_BH_corrected <= 0.05))$Peak
+    # CDC ID 234:
+      PA_234_produced <- (metabolomics_log2FC %>% filter(strain == 'CDC_ID_234', log2FC > 0, pvalue_BH_corrected <= 0.05))$Peak
+    # CDC ID 249:
+      PA_249_produced <- (metabolomics_log2FC %>% filter(strain == 'CDC_ID_249', log2FC > 0, pvalue_BH_corrected <= 0.05))$Peak
+    # Combined:
+      PA_production <- list(`Isogenic` = PA_isogenic_produced, 
+                            `SCFM Evolved` = PA_SCFM_evolved_produced, 
+                            `CDC 258` = PA_258_produced,
+                            `CDC 234` = PA_234_produced, 
+                            `CDC 249` = PA_249_produced)
+  # SA strains
+    # ATCC 
+      SA_ATCC_produced <- (metabolomics_log2FC %>% filter(strain == 'ATCC_29213', log2FC > 0, pvalue_BH_corrected <= 0.05))$Peak
+    # USA300
+      SA_USA300_produced <- (metabolomics_log2FC %>% filter(strain == 'USA300', log2FC > 0, pvalue_BH_corrected <= 0.05))$Peak
+    # CDC ID 484
+      SA_484_produced <- (metabolomics_log2FC %>% filter(strain == 'CDC_ID_484', log2FC > 0, pvalue_BH_corrected <= 0.05))$Peak
+    # CDC ID 474
+      SA_474_produced <- (metabolomics_log2FC %>% filter(strain == 'CDC_ID_474', log2FC > 0, pvalue_BH_corrected <= 0.05))$Peak
+    # Combined:
+      SA_production <- list(`ATCC 29213` = SA_ATCC_produced, 
+                            `USA300` = SA_USA300_produced, 
+                            `CDC 484` = SA_484_produced,
+                            `CDC 474` = SA_474_produced)
+      
+# Metabolites consumed by each strain: (p <= 0.05, log2FC < 0)
+  # PA strains
+    # Isogenic:
+      PA_isogenic_consumed <- (metabolomics_log2FC %>% filter(strain == 'Isogenic', log2FC < 0, pvalue_BH_corrected <= 0.05))$Peak
+    # SCFM_evolved:
+      PA_SCFM_evolved_consumed <- (metabolomics_log2FC %>% filter(strain == 'SCFM_evolved', log2FC < 0, pvalue_BH_corrected <= 0.05))$Peak
+    # CDC ID 258:
+      PA_258_consumed <- (metabolomics_log2FC %>% filter(strain == 'CDC_ID_258', log2FC < 0, pvalue_BH_corrected <= 0.05))$Peak
+    # CDC ID 234:
+      PA_234_consumed <- (metabolomics_log2FC %>% filter(strain == 'CDC_ID_234', log2FC < 0, pvalue_BH_corrected <= 0.05))$Peak
+    # CDC ID 249:
+      PA_249_consumed <- (metabolomics_log2FC %>% filter(strain == 'CDC_ID_249', log2FC < 0, pvalue_BH_corrected <= 0.05))$Peak
+    # Combined:
+      PA_consumption <- list(`Isogenic` = PA_isogenic_consumed, 
+                            `SCFM Evolved` = PA_SCFM_evolved_consumed, 
+                            `CDC 258` = PA_258_consumed,
+                            `CDC 234` = PA_234_consumed, 
+                            `CDC 249` = PA_249_consumed)
+  # SA strains
+    # ATCC 
+      SA_ATCC_consumed <- (metabolomics_log2FC %>% filter(strain == 'ATCC_29213', log2FC < 0, pvalue_BH_corrected <= 0.05))$Peak
+    # USA300
+      SA_USA300_consumed <- (metabolomics_log2FC %>% filter(strain == 'USA300', log2FC < 0, pvalue_BH_corrected <= 0.05))$Peak
+    # CDC ID 484
+      SA_484_consumed <- (metabolomics_log2FC %>% filter(strain == 'CDC_ID_484', log2FC < 0, pvalue_BH_corrected <= 0.05))$Peak
+    # CDC ID 474
+      SA_474_consumed <- (metabolomics_log2FC %>% filter(strain == 'CDC_ID_474', log2FC < 0, pvalue_BH_corrected <= 0.05))$Peak
+    # Combined:
+      SA_consumption <- list(`ATCC 29213` = SA_ATCC_consumed, 
+                            `USA300` = SA_USA300_consumed, 
+                            `CDC 484` = SA_484_consumed,
+                            `CDC 474` = SA_474_consumed)
+
+# A) PA Production
+figPaProduction <- upset(fromList(PA_production), sets = c("CDC 249","CDC 234","CDC 258","SCFM Evolved","Isogenic"), 
+                         order.by = "freq",  mainbar.y.label = "Metabolites Produced", point.size = 1.25, line.size = 0.75, mb.ratio = c(0.7, 0.3), 
+                                 text.scale = c(1, 1, 0, 1, 0.9, 1),  keep.order = TRUE,
+                                 queries = list(list(query = intersects, params = list("Isogenic","SCFM Evolved","CDC 258","CDC 234","CDC 249"), color = "red", active = T)))
+# figPaProduction$Main_bar$heights[1] <- unit(5, units = 'lines')
+figPaProduction$Main_bar$heights[12] <- unit(0, units = 'lines')
+figPaProduction <- as.ggplot(figPaProduction)
+
+# B) PA Consumption
+figPaConsumption <- upset(fromList(PA_consumption), sets = c("CDC 249","CDC 234","CDC 258","SCFM Evolved","Isogenic"), 
+                          order.by = "freq",  mainbar.y.label = "Metabolites Consumed", point.size = 1.25, line.size = 0.75,mb.ratio = c(0.7, 0.3), 
+                                 text.scale = c(1, 1, 0, 1, 0.9, 1),  keep.order = TRUE,
+                                 queries = list(list(query = intersects, params = list("Isogenic","SCFM Evolved","CDC 258","CDC 234","CDC 249"), color = "blue", active = T)))
+# figPaConsumption$Main_bar$heights[1] <- unit(2, units = 'lines')
+figPaConsumption$Main_bar$heights[12] <- unit(0, units = 'lines')
+figPaConsumption <- as.ggplot(figPaConsumption)
+
+# C) SA Production
+figSaProduction <- upset(fromList(SA_production), sets = c("CDC 474", "CDC 484", "USA300","ATCC 29213"),
+                         order.by = "freq",  mainbar.y.label = "Metabolites Produced", point.size = 1.25, line.size = 0.75,mb.ratio = c(0.7, 0.3), 
+                                 text.scale = c(1, 1, 0, 1, 0.9, 1),  keep.order = TRUE,
+                                 queries = list(list(query = intersects, params = list("ATCC 29213","USA300","CDC 484","CDC 474"), color = "red", active = T)))
+# figSaProduction$Main_bar$heights[1] <- unit(0, units = 'lines')
+# figSaProduction$Main_bar$heights[12] <- unit(4.75, units = 'lines')
+# figSaProduction$Sizes$heights[1] <- unit(-5, units = 'lines')
+# figSaProduction$Sizes$heights[12] <- unit(5.39, units = 'lines')
+figSaProduction$Main_bar$heights[12] <- unit(0, units = 'lines')
+figSaProduction <- as.ggplot(figSaProduction)
+
+# D) SA Consumption
+figSaConsumption <- upset(fromList(SA_consumption), sets = c("CDC 474", "CDC 484", "USA300","ATCC 29213"),
+                          order.by = "freq",  mainbar.y.label = "Metabolites Consumed", point.size = 1.25, line.size = 0.75,mb.ratio = c(0.7, 0.3), 
+                                 text.scale = c(1, 1, 0, 1, 0.9, 1), keep.order = TRUE,
+                                 queries = list(list(query = intersects, params = list("ATCC 29213","USA300","CDC 484","CDC 474"), color = "blue", active = T)))
+# figSaConsumption$Main_bar$heights[1] <- unit(0, units = 'lines')
+# figSaConsumption$Main_bar$heights[12] <- unit(4.75, units = 'lines')
+# figSaConsumption$Sizes$heights[1] <- unit(-5, units = 'lines')
+# figSaConsumption$Sizes$heights[12] <- unit(5.39, units = 'lines')
+figSaConsumption$Main_bar$heights[12] <- unit(0, units = 'lines')
+figSaConsumption <- as.ggplot(figSaConsumption)
+
+# Arrange Figure:
+
+Figure_Strain_Specific <- arrangeGrob(figPaProduction, figPaConsumption,figSaProduction,figSaConsumption,
+                                      nrow = 2, ncol = 2, heights=c(0.5,0.5), widths=c(0.5,0.5), 
+                                      layout_matrix=rbind(c(1,2), c(3,4)))
+
+Figure_Strain_Specific <- as_ggplot(Figure_Strain_Specific) +
+   draw_plot_label(label = c("A","B", "C", "D"), size = c(10,10,10,10),
+                   x = c(0.1,0.6,0.1,0.6), y = c(1,1,0.5,0.5))
+Figure_Strain_Specific
+
+
+ggsave('figures_and_supplement/Figure3.png', Figure_Strain_Specific, dpi = 300, width = 7, height = 5, units = 'in')
+```
+
+Test figures: Inferring competitive metabolic interactions from metabolomics data
+
+```{r, message=FALSE, warning=FALSE, result=FALSE, echo=FALSE}
+ 
+# A) UpsetR plot comparing metabolite production and consumption across species (color bars that will be focus of B-D examples)
+
+# Metabolites robustly produced by PA (all strains)
+PA_robust_produced <- (metabolomics_log2FC %>% 
+  filter(strain %in% c('Isogenic','SCFM_evolved','CDC_ID_258','CDC_ID_234','CDC_ID_249'), log2FC > 0, pvalue_BH_corrected <= 0.05) %>% 
+  group_by(Name) %>% mutate(numName = n()) %>% filter(numName == 5) %>% group_by(Peak) %>% summarise())
+
+# Metabolites robustly consumed by PA (all strains)
+PA_robust_consumed <- (metabolomics_log2FC %>% 
+  filter(strain %in% c('Isogenic','SCFM_evolved','CDC_ID_258','CDC_ID_234','CDC_ID_249'), log2FC < 0, pvalue_BH_corrected <= 0.05) %>% 
+  group_by(Name) %>% mutate(numName = n()) %>% filter(numName == 5) %>% group_by(Peak) %>% summarise())
+
+# Metabolites produced by at least one PA strain
+PA_any_produced <- (metabolomics_log2FC %>% 
+  filter(strain %in% c('Isogenic','SCFM_evolved','CDC_ID_258','CDC_ID_234','CDC_ID_249'), log2FC > 0, pvalue_BH_corrected <= 0.05) %>% 
+  group_by(Peak) %>% summarise())
+
+# Metabolites consumed by at least one PA strain
+PA_any_consumed <- (metabolomics_log2FC %>% 
+  filter(strain %in% c('Isogenic','SCFM_evolved','CDC_ID_258','CDC_ID_234','CDC_ID_249'), log2FC < 0, pvalue_BH_corrected <= 0.05) %>% 
+  group_by(Peak) %>% summarise())
+
+# Metabolites robustly produced by SA (all strains)
+SA_robust_produced <- (metabolomics_log2FC %>% 
+  filter(strain %in% c('ATCC_29213','USA300','CDC_ID_484','CDC_ID_474'), log2FC > 0, pvalue_BH_corrected <= 0.05) %>% 
+  group_by(Name) %>% mutate(numName = n()) %>% filter(numName == 4) %>% group_by(Peak) %>% summarise())
+
+# Metabolites robustly consumed by SA (all strains)
+SA_robust_consumed <- (metabolomics_log2FC %>% 
+  filter(strain %in% c('ATCC_29213','USA300','CDC_ID_484','CDC_ID_474'), log2FC < 0, pvalue_BH_corrected <= 0.05) %>% 
+  group_by(Name) %>% mutate(numName = n()) %>% filter(numName == 4) %>% group_by(Peak) %>% summarise())
+
+# Metabolites produced by at least one SA strain
+SA_any_produced <- (metabolomics_log2FC %>% 
+  filter(strain %in% c('ATCC_29213','USA300','CDC_ID_484','CDC_ID_474'), log2FC > 0, pvalue_BH_corrected <= 0.05) %>% 
+  group_by(Peak) %>% summarise())
+
+# Metabolites consumed by at least one SA strain
+SA_any_consumed <- (metabolomics_log2FC %>% 
+  filter(strain %in% c('ATCC_29213','USA300','CDC_ID_484','CDC_ID_474'), log2FC < 0, pvalue_BH_corrected <= 0.05) %>% 
+  group_by(Peak) %>% summarise())
+
+# Metabolites not produced by any PA strain
+PA_never_produced <- (metabolomics_log2FC %>% 
+  filter(strain %in% c('Isogenic','SCFM_evolved','CDC_ID_258','CDC_ID_234','CDC_ID_249'), !Peak %in% PA_any_produced$Peak) %>% 
+  group_by(Peak) %>% summarise())
+
+# Metabolites not produced by any SA strain
+SA_never_produced <- (metabolomics_log2FC %>% 
+  filter(strain %in% c('ATCC_29213','USA300','CDC_ID_484','CDC_ID_474'), !Peak %in% SA_any_produced$Peak) %>% 
+  group_by(Peak) %>% summarise())
+
+# Combine Robust:
+robust_metabolites <- list(`PA Consumed` = PA_robust_consumed$Peak, 
+                            `PA Produced` = PA_robust_produced$Peak, 
+                            `SA Consumed` = SA_robust_consumed$Peak,
+                            `SA Produced` = SA_robust_produced$Peak)
+# Combine Any:
+any_metabolites <- list(`PA Consumed` = PA_any_consumed$Peak, 
+                            `PA Produced` = PA_any_produced$Peak, 
+                            `SA Consumed` = SA_any_consumed$Peak,
+                            `SA Produced` = SA_any_produced$Peak)
+
+# Combine Robust and Any:
+robust_any_metabolites <- list(`PA Consumed` = PA_robust_consumed$Peak, 
+                            `PA Produced` = PA_robust_produced$Peak, 
+                            `SA Consumed` = SA_robust_consumed$Peak,
+                            `SA Produced` = SA_robust_produced$Peak,
+                            `PA Produced A ` = PA_any_produced$Peak, 
+                            `SA Produced A` = SA_any_produced$Peak)
+
+# Combine Robust Consumption: (current preference)
+robust_consumption <- list(`PA Always Consumed` = PA_robust_consumed$Peak, 
+                            `SA Always Consumed` = SA_robust_consumed$Peak)
+robust_biomarkers <- list(`PA Always Produced` = PA_robust_produced$Peak,
+                          `SA Always Produced` = SA_robust_produced$Peak,
+                          `PA Never Produced` = PA_never_produced$Peak,
+                          `SA Never Produced` = SA_never_produced$Peak)
+                            
+# Plot Figure A (Robust)
+upset(fromList(robust_metabolites), order.by = c('freq','degree'),  mainbar.y.label = "Number of Interactions", point.size = 1.25, line.size = 0.75,mb.ratio = c(0.7, 0.3), 
+                                 text.scale = c(1, 1, 0, 1, 0.9, 1),
+                                 queries = list(list(query = intersects, params = list("SA Consumed","PA Consumed"), color = "red", active = T),
+                                                list(query = intersects, params = list("SA Produced","PA Consumed"), color = "orange", active = T)))
+
+
+# Plot Figure A (Any)
+upset(fromList(any_metabolites), order.by = c('freq','degree'),  mainbar.y.label = "Number of Interactions", point.size = 1.25, line.size = 0.75,mb.ratio = c(0.7, 0.3), 
+                                 text.scale = c(1, 1, 0, 1, 0.9, 1),
+                                 queries = list(list(query = intersects, params = list("SA Consumed","PA Consumed"), color = "red", active = T),
+                                                list(query = intersects, params = list("SA Produced","PA Consumed"), color = "orange", active = T),
+                                                list(query = intersects, params = list("SA Consumed","PA Produced"), color = "blue", active = T)))
+
+# Plot Figure A in two parts (current preference)
+upset(fromList(robust_consumption),
+      order.by = c('freq'),
+      mainbar.y.label = "Robust Competitive Interactions",
+      point.size = 1.25, line.size = 0.75,mb.ratio = c(0.7, 0.3), text.scale = c(1, 1, 0, 1, 0.9, 1),
+      queries = list(list(query = intersects, params = list("PA Always Consumed", "SA Always Consumed"), color = 'red',active = T)))
+
+# upset(fromList(robust_biomarkers),
+#       order.by = c('freq'),
+#       mainbar.y.label = "Robust Competitive Interactions",
+#       point.size = 1.25, line.size = 0.75,mb.ratio = c(0.7, 0.3), text.scale = c(1, 1, 0, 1, 0.9, 1),
+#       queries = list(list(query = intersects, params = list("PA Always Produced", "SA Never Produced"), color = 'forestgreen',active = T),
+#                      list(query = intersects, params = list("PA Never Produced", "SA Always Produced"), color = 'orange', active = T)))
+          
+                           
+# B) Example 1
+# C) Example 2
+# D) Example 3
+
+# Arrange Figure:
+
+
+
+
+# Combine robust consumption, robust production, lack of production:
+# competition_biomarker_metabolites <- list(`PA Always Consumed` = PA_robust_consumed$Peak,
+#                                           `PA Always Produced` = PA_robust_produced$Peak,
+#                                           `SA Always Consumed` = SA_robust_consumed$Peak,
+#                                           `SA Always Produced` = SA_robust_produced$Peak,
+#                                           `PA Never Produced` = PA_never_produced$Peak,
+#                                           `SA Never Produced` = SA_never_produced$Peak)
+
+# numRobustConsumed_PA_SA <- nrow(inner_join(PA_robust_consumed, SA_robust_consumed, by = 'Peak'))
+# numBiomarkers_PA <- nrow(inner_join(PA_robust_produced, SA_never_produced, by = 'Peak'))
+# # numBiomarkers_SA <- nrow(inner_join(SA_robust_produced, PA_never_produced, by = 'Peak'))
+# # Combine Robust Production and Never Production:
+# competition_biomarker_metabolites <- c(`PA Always Consumed&SA Always Consumed&PA Never Produced&SA Never Produced` = numRobustConsumed_PA_SA,
+#                                        `PA Always Produced&SA Never Produced` = numBiomarkers_PA,
+#                                        `PA Never Produced&SA Always Produced` = numBiomarkers_SA)
+# Plot Figure A (Any and Robust)
+# upset(fromList(robust_any_metabolites), order.by = c('freq','degree'),  mainbar.y.label = "Number of Interactions", point.size = 1.25, line.size = 0.75,mb.ratio = c(0.55, 0.45), 
+#                                  text.scale = c(1, 1, 0, 1, 0.9, 1))#,
+#                                  # queries = list(list(query = intersects, params = list("SA Consumed","PA Consumed"), color = "red", active = T),
+#                                  #                list(query = intersects, params = list("SA Produced","PA Consumed"), color = "orange", active = T)))
+
+# Plot Figure A (Robust Competition and Biomarkers)
+# upset(fromExpression(competition_biomarker_metabolites),
+#       order.by = c('freq','degree'),
+#       nsets = 6,
+#       mainbar.y.label = "Number of Interactions",
+#       point.size = 1.25, line.size = 0.75,mb.ratio = c(0.55, 0.45), text.scale = c(1, 1, 0, 1, 0.9, 1),
+#       queries = list(list(query = intersects, params = list("PA Always Consumed", "SA Always Consumed", "PA Never Produced","SA Never Produced"), color = 'red',active = T),
+#                      list(query = intersects, params = list( "PA Never Produced","SA Always Produced"), color = 'orange',active = T),
+#                      list(query = intersects, params = list("PA Always Produced","SA Never Produced"), color = 'green',active = T)))
+
+
+```
+
+Draft figure: Inferring competitive metabolic interactions from metabolomics data
+
+```{r, message=FALSE, warning=FALSE, result=FALSE, echo=FALSE}
+### A. Robust competitive interactions:
+
+# Metabolites robustly consumed by PA (all strains)
+PA_robust_consumed <- (metabolomics_log2FC %>% 
+  filter(strain %in% c('Isogenic','SCFM_evolved','CDC_ID_258','CDC_ID_234','CDC_ID_249'), log2FC < 0, pvalue_BH_corrected <= 0.05) %>% 
+  group_by(Name) %>% mutate(numName = n()) %>% filter(numName == 5) %>% group_by(Peak) %>% summarise())
+
+# Metabolites robustly consumed by SA (all strains)
+SA_robust_consumed <- (metabolomics_log2FC %>% 
+  filter(strain %in% c('ATCC_29213','USA300','CDC_ID_484','CDC_ID_474'), log2FC < 0, pvalue_BH_corrected <= 0.05) %>% 
+  group_by(Name) %>% mutate(numName = n()) %>% filter(numName == 4) %>% group_by(Peak) %>% summarise())
+
+# Combine Robust Consumption: 
+robust_consumption <- list(`PA Always Consumed` = PA_robust_consumed$Peak, 
+                            `SA Always Consumed` = SA_robust_consumed$Peak)
+
+# Metabolites produced by all strains of SA but not all strains of PA
+metabolomics_log2FC %>% filter(Peak %in% (anti_join(SA_robust_consumed, PA_robust_consumed, by = 'Peak'))$Peak) %>% group_by(Peak, Name) %>% summarise()
+
+# Plot:
+figureConsumptionA <- upset(fromList(robust_consumption),
+      order.by = c('freq'),
+      mainbar.y.label = "Robust Competitive Interactions",
+      point.size = 1.25, line.size = 0.75,mb.ratio = c(0.6, 0.4), text.scale = c(0.75, 1, 0, 1, 0.75, 1),
+      queries = list(list(query = intersects, params = list("PA Always Consumed", "SA Always Consumed"), color = 'blue',active = T)))
+figureConsumptionA$Main_bar$heights[12] <- unit(0, units = 'lines')
+figureConsumptionA <- as.ggplot(figureConsumptionA)
+
+### B. Example: Metabolites consumed by both organisms
+metabolites_competitive <- inner_join(SA_robust_consumed, PA_robust_consumed, by = 'Peak')
+figConsumptionBdat <- metabolomics_log2FC %>% ungroup() %>% 
+  filter(Peak %in% c(metabolites_competitive$Peak), species == 'PA') %>% 
+  group_by(Peak) %>% mutate(medianLog2FC = median(log2FC), minLog2FC = min(log2FC)) %>% 
+  # filter(minLog2FC >= 1, !is.na(KEGG_ID)) %>%
+  ungroup()
+figConsumptionBdat$Peak <- factor(figConsumptionBdat$Peak,levels = unique(figConsumptionBdat %>% arrange(desc(medianLog2FC)) %>% select(Peak))$Peak, ordered = TRUE)
+figConsumptionBdat$Name <- factor(figConsumptionBdat$Name,levels = unique(figConsumptionBdat %>% arrange(desc(medianLog2FC)) %>% select(Name))$Name, ordered = TRUE)
+# figConsumptionBdat$Name <- factor(figConsumptionBdat$Name,levels = rev(unique(figConsumptionBdat %>% arrange(Name))$Name), ordered = TRUE)
+# figConsumptionBdat$Name <- factor(figConsumptionBdat$Name,
+                                  # levels = rev(c("1,5-Naphthalenediamine","(3R)-beta-Leucine","8-Hydroxyquinoline","D-(-)-Fructose","D-(+)-Galactose","D-(+)-Tryptophan","DL-Lactic Acid","DL-Tryptophan","Indole-3-acrylic acid","Isoquinoline","L-Glutamic acid","L-Homoserine","L-(+)-Lactic acid","L-Serine","Ornithine")), ordered = TRUE)
+figConsumptionBdat$strain <- factor(figConsumptionBdat$strain, levels = c('Isogenic','SCFM_evolved','CDC_ID_258','CDC_ID_234','CDC_ID_249'),
+                                  labels = c('Isogenic','SCFM-Evolved','CDC 258','CDC 234','CDC 249'),ordered = TRUE)
+
+figConsumptionB <- figConsumptionBdat %>% 
+  ggplot(aes(Name, log2FC)) + geom_point(aes(fill = strain), color = 'black', shape = 21) +
+  scale_fill_manual(values = c('green','green3','forestgreen','lightseagreen','greenyellow')) +
+  stat_summary(fun=median, geom="crossbar", color="black", width = 0.75) + 
+  theme_bw() + 
+  theme(axis.text = element_text(size = 6.75),
+        legend.key.size = unit(0.05, units = 'cm'),
+        legend.text = element_text(size = 5.75),
+        legend.title = element_blank(),
+        axis.title = element_text(size = 7.5),
+        legend.position = c(0.25,0.125),
+        # legend.position = c(0.775,0.125),
+        legend.background = element_blank(),
+        axis.title.y = element_blank()) +
+  # xlab('Metabolite') + 
+  ylab(expression(paste("log2", bgroup('(',over(strain, SCFM),')')))) +
+  # ylim(0,15) +
+  # scale_x_discrete(position = 'top') +
+  coord_flip()
+
+### C. Example
+figConsumptionCdat <- metabolomics_log2FC %>% ungroup() %>% 
+  filter(Peak %in% c(metabolites_competitive$Peak), species == 'SA') %>% 
+  group_by(Peak) %>% mutate(medianLog2FC = median(log2FC), minLog2FC = min(log2FC)) %>% 
+  # filter(minLog2FC >= 1) %>%
+  ungroup()
+# figConsumptionCdat$Peak <- factor(figConsumptionCdat$Peak,levels = unique(figConsumptionCdat %>% arrange(desc(medianLog2FC)) %>% select(Peak))$Peak, ordered = TRUE)
+# figConsumptionCdat$Name <- factor(figConsumptionCdat$Name,levels = unique(figConsumptionCdat %>% arrange(desc(medianLog2FC)) %>% select(Name))$Name, ordered = TRUE)
+figConsumptionCdat$Name <- factor(figConsumptionCdat$Name,levels = unique(figConsumptionBdat %>% arrange(desc(medianLog2FC)) %>% select(Name))$Name, ordered = TRUE)
+# figConsumptionCdat$Name <- factor(figConsumptionCdat$Name,levels = rev(unique(figConsumptionCdat %>% select(Name))$Name), ordered = TRUE)
+# figConsumptionCdat$Name <- factor(figConsumptionCdat$Name,
+                                  # levels = rev(c("1,5-Naphthalenediamine","(3R)-beta-Leucine","8-Hydroxyquinoline","D-(-)-Fructose","D-(+)-Galactose","D-(+)-Tryptophan","DL-Lactic Acid","DL-Tryptophan","Indole-3-acrylic acid","Isoquinoline","L-Glutamic acid","L-Homoserine","L-(+)-Lactic acid","L-Serine","Ornithine")), ordered = TRUE)
+figConsumptionCdat$strain <- factor(figConsumptionCdat$strain, levels = c('ATCC_29213','USA300','CDC_ID_484','CDC_ID_474'), 
+                                  labels = c('ATCC 29213','USA300','CDC 484','CDC 474'),
+                                  ordered = TRUE)
+
+figConsumptionC <- figConsumptionCdat %>% 
+  ggplot(aes(Name, log2FC)) + geom_point(aes(fill = strain), color = 'black', shape = 21) +
+  scale_fill_manual(values = c('orange','orange2','orange3','orange4')) +
+  stat_summary(fun=median, geom="crossbar", color="black", width = 0.75) + 
+  theme_bw() + 
+  theme(axis.text = element_text(size = 6.75),
+        legend.key.size = unit(0.05, units = 'cm'),
+        legend.background = element_blank(),
+        legend.text = element_text(size = 5.75),
+        legend.title = element_blank(),
+        axis.title = element_text(size = 7.5),
+        axis.title.y = element_blank(),
+        # legend.position = c(0.25,0.1),
+        legend.position = c(0.25,0.925)) +
+  # xlab('Metabolite') + 
+  ylab(expression(paste("log2", bgroup('(',over(strain, SCFM),')')))) +
+  # ylim(0,13) +
+  coord_flip()
+
+# Arrange Figure:
+Figure_Consumption <- arrangeGrob(figureConsumptionA + theme(plot.margin = unit(c(5.5,5.5,5.5,-40), "pt")),figConsumptionB,figConsumptionC,
+                                      nrow = 1, ncol = 3, heights=c(1), widths=c(1.6,2.7,2.7), 
+                                      layout_matrix=rbind(c(1,2,3)))
+
+Figure_Consumption <- as_ggplot(Figure_Consumption) +
+   draw_plot_label(label = c("A","B", "C"), size = c(10,10,10),
+                   x = c(0,0.22,0.61), y = c(1,1,1))
+# Figure_Consumption
+
+
+ggsave('figures_and_supplement/Figure4.png', Figure_Consumption, dpi = 300, width = 7, height = 3, units = 'in')
+
+```
+
+
+Draft Figure: Biomarkers for PA and SA (robustly produced by one and never produced by the other)
+
+A. Number of metabolites significantly produced by all strains of a species and not produced by any of the other species
+B. Biomarkers of PA (metabolites produced where all strains have >=1 log2fold (fold change = 2))
+C. Biomarkers of SA (metabolits produced where all strains have >=1 log2FC)
+
+```{r, message=FALSE, warning=FALSE, result=FALSE, echo=FALSE}
+### A. UpsetR of biomarkers:
+# Metabolites robustly produced by PA (all strains)
+PA_robust_produced <- (metabolomics_log2FC %>% 
+  filter(strain %in% c('Isogenic','SCFM_evolved','CDC_ID_258','CDC_ID_234','CDC_ID_249'), log2FC > 0, pvalue_BH_corrected <= 0.05) %>% 
+  group_by(Name) %>% mutate(numName = n()) %>% filter(numName == 5) %>% group_by(Peak) %>% summarise())
+
+# Metabolites produced by at least one PA strain
+PA_any_produced <- (metabolomics_log2FC %>% 
+  filter(strain %in% c('Isogenic','SCFM_evolved','CDC_ID_258','CDC_ID_234','CDC_ID_249'), log2FC > 0, pvalue_BH_corrected <= 0.05) %>% 
+  group_by(Peak) %>% summarise())
+
+# Metabolites robustly produced by SA (all strains)
+SA_robust_produced <- (metabolomics_log2FC %>% 
+  filter(strain %in% c('ATCC_29213','USA300','CDC_ID_484','CDC_ID_474'), log2FC > 0, pvalue_BH_corrected <= 0.05) %>% 
+  group_by(Name) %>% mutate(numName = n()) %>% filter(numName == 4) %>% group_by(Peak) %>% summarise())
+
+# Metabolites produced by at least one SA strain
+SA_any_produced <- (metabolomics_log2FC %>% 
+  filter(strain %in% c('ATCC_29213','USA300','CDC_ID_484','CDC_ID_474'), log2FC > 0, pvalue_BH_corrected <= 0.05) %>% 
+  group_by(Peak) %>% summarise())
+
+# Metabolites not produced by any PA strain
+PA_never_produced <- (metabolomics_log2FC %>% 
+  filter(strain %in% c('Isogenic','SCFM_evolved','CDC_ID_258','CDC_ID_234','CDC_ID_249'), !Peak %in% PA_any_produced$Peak) %>% 
+  group_by(Peak) %>% summarise())
+
+# Metabolites not produced by any SA strain
+SA_never_produced <- (metabolomics_log2FC %>% 
+  filter(strain %in% c('ATCC_29213','USA300','CDC_ID_484','CDC_ID_474'), !Peak %in% SA_any_produced$Peak) %>% 
+  group_by(Peak) %>% summarise())
+
+robust_biomarkers <- list(`PA Always Produced` = PA_robust_produced$Peak,
+                          `SA Always Produced` = SA_robust_produced$Peak,
+                          `PA Never Produced` = PA_never_produced$Peak,
+                          `SA Never Produced` = SA_never_produced$Peak)
+
+figBiomarkerA <- upset(fromList(robust_biomarkers),
+      order.by = c('freq'),
+      mainbar.y.label = "Robust Competitive Interactions",
+      point.size = 1.25, line.size = 0.75,mb.ratio = c(0.7, 0.3), text.scale = c(1, 1, 0, 1, 0.9, 1),
+      queries = list(list(query = intersects, params = list("PA Always Produced", "SA Never Produced"), color = 'forestgreen',active = T),
+                     list(query = intersects, params = list("PA Never Produced", "SA Always Produced"), color = 'orange2', active = T)))
+figBiomarkerA$Main_bar$heights[12] <- unit(0, units = 'lines')
+figBiomarkerA <- as.ggplot(figBiomarkerA)
+
+### B. Fold changes in biomarkers colored by PA strain
+# NOTE: Filtered out metabolites where one or more strains has log2FC < 1 (smaller magnitude biomarkers)
+# NOTE: Only included metabolites with KEGG IDs
+# Identify biomarkers always produced by PA and never produced by SA:
+PA_biomarkers <- inner_join(PA_robust_produced, SA_never_produced, by = 'Peak')
+figBiomarkerBdat <- metabolomics_log2FC %>% ungroup() %>% 
+  filter(Peak %in% c(PA_biomarkers$Peak), species == 'PA') %>% 
+  group_by(Peak) %>% mutate(medianLog2FC = median(log2FC), minLog2FC = min(log2FC)) %>% 
+  filter(minLog2FC >= 1, !is.na(KEGG_ID)) %>%
+  ungroup()
+write_csv(figBiomarkerBdat, 'figures_and_supplement/PA_Biomarkers.csv')
+figBiomarkerBdat$Peak <- factor(figBiomarkerBdat$Peak,levels = unique(figBiomarkerBdat %>% arrange(medianLog2FC) %>% select(Peak))$Peak, ordered = TRUE)
+figBiomarkerBdat$Name <- factor(figBiomarkerBdat$Name,levels = unique(figBiomarkerBdat %>% arrange(medianLog2FC) %>% select(Name))$Name, ordered = TRUE)
+figBiomarkerBdat$strain <- factor(figBiomarkerBdat$strain, levels = c('Isogenic','SCFM_evolved','CDC_ID_258','CDC_ID_234','CDC_ID_249'),
+                                  labels = c('Isogenic','SCFM-Evolved','CDC 258','CDC 234','CDC 249'),ordered = TRUE)
+  
+figBiomarkerB <- figBiomarkerBdat %>% 
+  ggplot(aes(Name, log2FC)) + geom_point(aes(fill = strain), color = 'black', shape = 21) +
+  scale_fill_manual(values = c('green','green3','forestgreen','lightseagreen','greenyellow')) +
+  stat_summary(fun=median, geom="crossbar", color="black", width = 0.75) + 
+  theme_bw() + 
+  theme(axis.text.y = element_text(size = 7),
+        legend.key.size = unit(0.1, units = 'cm'),
+        legend.text = element_text(size = 6.5),
+        legend.title = element_blank(),
+        axis.title = element_text(size = 7.5),
+        legend.position = c(0.225,0.96),
+        legend.background = element_blank(),
+        axis.title.y = element_blank()) +
+  # xlab('Metabolite') + 
+  ylab(expression(paste("log2", bgroup('(',over(strain, SCFM),')')))) +
+  ylim(0,13) +
+  scale_x_discrete(position = 'top') +
+  coord_flip()
+
+### C. Fold changes in biomarkers for SA colored by strain
+# NOTE: Filtered out metabolites where one or more strains has log2FC < 1 (smaller magnitude biomarkers)
+SA_biomarkers <- inner_join(SA_robust_produced, PA_never_produced, by = 'Peak')
+figBiomarkerCdat <- metabolomics_log2FC %>% ungroup() %>% 
+  filter(Peak %in% c(SA_biomarkers$Peak), species == 'SA') %>% 
+  group_by(Peak) %>% mutate(medianLog2FC = median(log2FC), minLog2FC = min(log2FC)) %>% 
+  filter(minLog2FC >= 1) %>%
+  ungroup()
+figBiomarkerCdat$Peak <- factor(figBiomarkerCdat$Peak,levels = unique(figBiomarkerCdat %>% arrange(medianLog2FC) %>% select(Peak))$Peak, ordered = TRUE)
+figBiomarkerCdat$Name <- factor(figBiomarkerCdat$Name,levels = unique(figBiomarkerCdat %>% arrange(medianLog2FC) %>% select(Name))$Name, ordered = TRUE)
+figBiomarkerCdat$strain <- factor(figBiomarkerCdat$strain, levels = c('ATCC_29213','USA300','CDC_ID_484','CDC_ID_474'), 
+                                  labels = c('ATCC 29213','USA300','CDC 484','CDC 474'),
+                                  ordered = TRUE)
+
+figBiomarkerC <- figBiomarkerCdat %>% 
+  ggplot(aes(Name, log2FC)) + geom_point(aes(fill = strain), color = 'black', shape = 21) +
+  scale_fill_manual(values = c('orange','orange2','orange3','orange4')) +
+  stat_summary(fun=median, geom="crossbar", color="black", width = 0.75) + 
+  theme_bw() + 
+  theme(axis.text.y = element_text(size = 7),
+        legend.key.size = unit(0.1, units = 'cm'),
+        legend.background = element_blank(),
+        legend.text = element_text(size = 6.5),
+        legend.title = element_blank(),
+        axis.title = element_text(size = 7.5),
+        axis.title.y = element_blank(),
+        legend.position = c(0.275,0.92)) +
+  # xlab('Metabolite') + 
+  ylab(expression(paste("log2", bgroup('(',over(strain, SCFM),')')))) +
+  ylim(0,13) +
+  coord_flip()
+
+# Arrange Figure:
+Figure_Biomarkers <- arrangeGrob(figBiomarkerA + theme(plot.margin = unit(c(5.5,5.5,5.5,-40), "pt")), figBiomarkerB,figBiomarkerC,
+                                      nrow = 2, ncol = 2, heights=c(0.5,0.5), widths=c(2.6,4), 
+                                      layout_matrix=rbind(c(1,2), c(3,2)))
+
+Figure_Biomarkers <- as_ggplot(Figure_Biomarkers) +
+   draw_plot_label(label = c("A","B", "C"), size = c(10,10,10),
+                   x = c(0,0.35,0), y = c(1,1,0.52))
+# Figure_Biomarkers
+
+ggsave('figures_and_supplement/Figure5.png', Figure_Biomarkers, dpi = 300, width = 7, height = 6.6, units = 'in')
+
+```
+
+
+SUPPLEMENT:
+
+
+Supplemental Data:
+
+1. Raw and normalized peak areas
+2. Statistics (metabolomics_statistics)
+3. Log2 Fold Changes with Significance (stats not calculated on log2 fold changes but log2FC show direction of change from SCFM) 
+
+```{r, message=FALSE, warning=FALSE, result=FALSE, echo=FALSE}
+# Export Data
+
+# Data S1: log 2 fold changes
+DataS1 <- metabolomics_log2FC %>% 
+  inner_join((metabolomics_statistics %>% select(strain, Peak, pvalue_unadjusted)), by = c('Peak','strain')) %>% 
+  mutate(FC = 2^log2FC) %>% 
+  select(Peak, Name, strain, species, FC,log2FC, pvalue_unadjusted, pvalue_BH_corrected, asterisks_BH_corrected)
+write_csv(DataS1, 'figures_and_supplement/DataS1.csv')
+
+# Data S2 - Raw and normalized areas for all metabolites all samples
+DataS2 <- metabolomics_normalized %>% select(strain, species, replicate,Peak, Name, Formula, KEGG_ID, `Molecular Weight`, `RT [min]`,`mzVault Best Match`, `mzCloud Best Match`,MS2, Area, normalizedArea)
+write_csv(DataS2, 'figures_and_supplement/DataS2.csv')
+
+```
+
+
+Draft supplemental Figure: Adaptation of UCBPP-PA14 to SCFM 
+```{r, message=FALSE, warning=FALSE, result=FALSE, echo=FALSE}
+# Load tidy data from Generating_Ancesotr.RMD
+ancestor_ALE_tidy_dat <- read_csv('data/generating_ancestor_complete.csv')
+ancestor_vs_isogenic_growth <- read_csv('data/ancestor_vs_isogenic_tidy_growth_curves.csv')
+
+
+# Select for Replicate 1 and blank and formatted for growthrates package
+ancestor_ALE_R1 <- ancestor_ALE_tidy_dat %>% filter(replicate == 'R1' | replicate == 'blank')
+ancestor_ALE_R1_growthrates <- ancestor_ALE_R1 %>% filter(replicate != 'blank') %>% mutate(value = OD600_bs, conc = 0, strain = day) %>% select(strain, replicate, conc, time, value)
+# xyplot(value ~ time|strain+as.factor(conc), data = ancestor_ALE_R1_growthrates,
+#        groups = replicate, pch = 16, cex = 0.5)
+
+# Tidy ancestor_vs_isogenic_growth (from 4/1/19)
+# Background subtract:
+ancestor_vs_isogenic_growth <- ancestor_vs_isogenic_growth %>%
+  group_by(time) %>%
+  mutate(OD600_bs = medianOD600 - medianOD600[strain == 'blank']) %>%
+  filter(strain != 'blank')
+
+# Take median and IQ across biological replicates:
+ancestor_vs_isogenic_growth_median <- ancestor_vs_isogenic_growth %>% group_by(time, strain) %>%
+  summarise(medianOD600_bs = median(OD600_bs), IQ25 = quantile(OD600_bs, 0.25), IQ75 = quantile(OD600_bs, 0.75))
+
+# 
+# Calculate growth dynamics
+  # Library(growthrates)
+# Format data:
+splitted.data <- multisplit(ancestor_ALE_R1_growthrates, c("strain", "conc", "replicate"))
+d0 <- splitted.data[[1]]
+d1 <- splitted.data[[2]]
+d2 <- splitted.data[[3]]
+d3 <- splitted.data[[4]]
+d4 <- splitted.data[[5]]
+d5 <- splitted.data[[6]]
+d6 <- splitted.data[[7]]
+d7 <- splitted.data[[8]]
+d8 <- splitted.data[[9]]
+d9 <- splitted.data[[10]]
+d10 <- splitted.data[[11]]
+# Variables for fitting
+p     <- c(y0 = 0.01, mumax = 0.2, K = 0.1)
+lower <- c(y0 = 1e-6, mumax = 0,   K = 0)
+upper <- c(y0= 0.05, mumax = 5,   K = 0.5)
+
+fitD0 <- fit_growthmodel(FUN = grow_logistic, p = p, d0$time, d0$value,
+                        lower = lower, upper = upper)
+fitD1 <- fit_growthmodel(FUN = grow_logistic, p = p, d1$time, d1$value,
+                        lower = lower, upper = upper)
+fitD2 <- fit_growthmodel(FUN = grow_logistic, p = p, d2$time, d2$value,
+                        lower = lower, upper = upper)
+fitD3 <- fit_growthmodel(FUN = grow_logistic, p = p, d3$time, d3$value,
+                        lower = lower, upper = upper)
+fitD4 <- fit_growthmodel(FUN = grow_logistic, p = p, d4$time, d4$value,
+                        lower = lower, upper = upper)
+fitD5 <- fit_growthmodel(FUN = grow_logistic, p = p, d5$time, d5$value,
+                        lower = lower, upper = upper)
+fitD6 <- fit_growthmodel(FUN = grow_logistic, p = p, d6$time, d6$value,
+                        lower = lower, upper = upper)
+fitD7 <- fit_growthmodel(FUN = grow_logistic, p = p, d7$time, d7$value,
+                        lower = lower, upper = upper)
+fitD8 <- fit_growthmodel(FUN = grow_logistic, p = p, d8$time, d8$value,
+                        lower = lower, upper = upper)
+fitD9 <- fit_growthmodel(FUN = grow_logistic, p = p, d9$time, d9$value,
+                        lower = lower, upper = upper)
+fitD10 <- fit_growthmodel(FUN = grow_logistic, p = p, d10$time, d10$value,
+                        lower = lower, upper = upper)
+
+# Plot to make sure fits look reasonable
+plot(fitD0)
+plot(fitD1)
+plot(fitD2)
+plot(fitD3)
+plot(fitD4)
+plot(fitD5)
+plot(fitD6)
+plot(fitD7)
+plot(fitD8)
+plot(fitD9)
+plot(fitD10)
+
+# Make dataframe of growth rates:
+dayraw <- (ancestor_ALE_R1_growthrates %>% group_by(strain) %>% summarise())$strain[1:11]
+day <- c(0,1,2,3,4,5,6,7,8,9,10)
+mumax <- c(as.numeric(coef(fitD0)[2]),
+           as.numeric(coef(fitD1)[2]),
+           as.numeric(coef(fitD2)[2]),
+           as.numeric(coef(fitD3)[2]),
+           as.numeric(coef(fitD4)[2]),
+           as.numeric(coef(fitD5)[2]),
+           as.numeric(coef(fitD6)[2]),
+           as.numeric(coef(fitD7)[2]),
+           as.numeric(coef(fitD8)[2]),
+           as.numeric(coef(fitD9)[2]),
+           as.numeric(coef(fitD10)[2]))
+growth_rates_all <- data.frame(dayraw,day, mumax)
+
+# Plot growth curve by day
+Fig_Ancestor_Growth <- ancestor_ALE_R1 %>% mutate(day = as.numeric(substring(day, 2))) %>% group_by(day) %>%
+  filter(day <= 10, replicate != 'blank') %>%
+  ggplot(aes(time, OD600_bs, color = day)) + geom_point() + theme_pubr() + scale_colour_gradient(low = 'black', high = 'grey90') +
+  theme(legend.position = 'right', legend.text = element_text(size = 8, hjust = 0), legend.title = element_text(size = 10), axis.text = element_text(size = 8), axis.title = element_text(size = 10)) +
+  xlim(0,25) + ylab('OD600') + xlab('time (h)')
+
+# Plot growth rate of R1 by day
+Fig_Ancestor_Growth_Rate <- growth_rates_all %>%
+  ggplot(aes(day, mumax)) + geom_line() + geom_point() +
+  theme_pubr() +
+  theme(axis.text = element_text(size = 8), axis.title = element_text(size = 10)) +
+  scale_x_continuous(breaks=c(0,2,4,6,8,10)) + ylab('growth rate (1/h)') + xlab('time (day)')
+# Fig_Ancestor_Growth_Rate <- growth_dynamics_all %>%
+#   ggplot(aes(day, r)) + geom_line() + geom_point() +
+#   theme_pubr() +
+#   theme(axis.text = element_text(size = 8), axis.title = element_text(size = 10)) +
+#   scale_x_continuous(breaks=c(0,2,4,6,8,10)) + ylab('growth rate (1/h)') + xlab('time (day)')
+
+# Plot median + IQ of isogenic and SE evolved growth curves
+Fig_Ancestor_Isogenic_Growth <- ancestor_vs_isogenic_growth_median %>% ggplot(aes(time, medianOD600_bs, color = strain)) +
+  geom_ribbon(aes(x = time, ymin = IQ25, ymax = IQ75, fill = strain), alpha = 0.25, color = NA) +
+  geom_line() + theme_pubr() +
+  scale_fill_manual(values = c('black','green'), labels = c('SCFM-Evolved','Isogenic')) +
+  scale_colour_manual(values = c('black','green'), labels = c('SCFM-Evolved','Isogenic')) +
+  theme(legend.position = c(0.75,0.2),
+        legend.text = element_text(size = 8, hjust = 0),
+        legend.title = element_blank(),
+        axis.text = element_text(size = 8),
+        axis.title = element_text(size = 10)) +
+   xlim(0,25) + ylab('OD600') + xlab('time (h)')
+
+# Arrange Figure:
+
+Figure_Generating_Ancestor <- arrangeGrob(Fig_Ancestor_Growth, Fig_Ancestor_Growth_Rate, Fig_Ancestor_Isogenic_Growth, ncol=3, nrow =1, widths=c(0.36,0.25,0.39), layout_matrix=cbind(c(1), c(2), c(3)))
+
+Figure_Generating_Ancestor <- as_ggplot(Figure_Generating_Ancestor) +
+   draw_plot_label(label = c("A","B", "C"), size = 12,
+                   x = c(0,0.39,0.61), y = c(1,1,1))
+Figure_Generating_Ancestor
+
+
+ggsave('figures_and_supplement/FigureS2.png', Figure_Generating_Ancestor, dpi = 300, width = 7, height = 2.5, units = 'in')
+
+
+
+```
+
+METABOLIGHTS Metadata:
+```{r, message=FALSE, warning=FALSE, result=FALSE, echo=FALSE}
+# Sample Metadata
+metabolights_sample_info <- metabolomics_sample_key %>% select(fileName, sampleName, replicate, species, strain, charge, sample) %>% 
+  filter(sample != 'blank') %>% 
+  mutate(`Source Name` = 1,
+         `Protocol REF` = 'Sample collection', 
+         `Sample Name` = fileName,
+         `Characteristics[Organism]` = species,
+         `Characteristics[Organism part]` = 'Culture media, conditioned',
+         `Characteristics[media]` = 'SCFM',
+         `Characteristics[strain]` = strain,
+         `Characteristics[Replicate]` = replicate,
+         `Characteristics[Variant]` = charge) %>% 
+  mutate(`Characteristics[Organism]` = case_when(is.na(`Characteristics[Organism]`) ~ 'pooled', `Characteristics[Organism]` == 'PA' ~ 'Pseudomonas aeruginosa',
+                                                 `Characteristics[Organism]` == 'SA' ~ 'Staphylococcus aureus',TRUE ~ `Characteristics[Organism]`),
+         `Characteristics[Replicate]` = case_when(is.na(`Characteristics[Replicate]`) ~ 'pooled', TRUE ~  `Characteristics[Replicate]`),
+         `Characteristics[strain]` = case_when(is.na(`Characteristics[strain]`) ~ 'pooled', TRUE ~  `Characteristics[strain]`)) %>% 
+  select(-fileName, -sampleName, -replicate, -species, -strain,-charge, -sample)
+write.table(metabolights_sample_info, '../Individual_Spent/metabolomics/final_data/s_MTBLS2105.txt', append = FALSE, sep = "\t", dec = ".",
+            row.names = FALSE, col.names = TRUE, quote = FALSE)
+
+# Assay Metadata
+  # a_MTBLS2105_LC-MS___metabolite_profiling
+
+# Metabolites metadata:
+metabolight_metabolites_tsv <- unique(metabolomics_tidy %>% select(-fileName, -Area, -sampleName, -sampleNameOrig, - sample, -species,-strain,-charge,-replicate, -Peak)) %>% 
+  mutate(database_identifier = Name, 
+         chemical_formula = Formula,
+         smiles = NA,
+         inchi = NA,
+         metabolite_identification = NA,
+         mass_to_charge = NA) 
+metabolight_metabolites_tsv <- metabolight_metabolites_tsv[, c(15, 16, 17, 18,19,20, 1:14)]
+write_tsv(metabolight_metabolites_tsv, '../Individual_Spent/metabolomics/final_data/m_MTBLS2105_LC-MS___metabolite_profiling_v2_maf.tsv')
+
+```
+
+Scrap code
+
+```{r, message=FALSE, warning=FALSE, result=FALSE, echo=FALSE}
+
+# # 
+# # Day 0
+# Day0_growthcurver_format <- ancestor_ALE_R1 %>% 
+#   filter(day == 'D0') %>% 
+#   select(replicate, time, rawOD600) %>% 
+#   spread(replicate, rawOD600)
+# 
+# # Day 1
+# Day1_growthcurver_format <- ancestor_ALE_R1 %>% 
+#   filter(day == 'D1') %>% 
+#   select(replicate, time, rawOD600) %>% 
+#   spread(replicate, rawOD600)
+# 
+# # Day 2
+# Day2_growthcurver_format <- ancestor_ALE_R1 %>% 
+#   filter(day == 'D2') %>% 
+#   select(replicate, time, rawOD600) %>% 
+#   spread(replicate, rawOD600)
+# 
+# # Day 3
+# Day3_growthcurver_format <- ancestor_ALE_R1 %>% 
+#   filter(day == 'D3') %>% 
+#   select(replicate, time, rawOD600) %>% 
+#   spread(replicate, rawOD600)
+# 
+# # Day 4
+# Day4_growthcurver_format <- ancestor_ALE_R1 %>% 
+#   filter(day == 'D4') %>% 
+#   select(replicate, time, rawOD600) %>% 
+#   spread(replicate, rawOD600)
+# 
+# # Day 5
+# Day5_growthcurver_format <- ancestor_ALE_R1 %>% 
+#   filter(day == 'D5') %>% 
+#   select(replicate, time, rawOD600) %>% 
+#   spread(replicate, rawOD600)
+# 
+# # Day 6:
+# Day6_growthcurver_format <- ancestor_ALE_R1 %>% 
+#   filter(day == 'D6') %>% 
+#   select(replicate, time, rawOD600) %>% 
+#   spread(replicate, rawOD600)
+# 
+# # Day 7:
+# Day7_growthcurver_format <- ancestor_ALE_R1 %>% 
+#   filter(day == 'D7') %>% 
+#   select(replicate, time, rawOD600) %>% 
+#   spread(replicate, rawOD600)
+# 
+# # Day 8:
+# Day8_growthcurver_format <- ancestor_ALE_R1 %>% 
+#   filter(day == 'D8') %>% 
+#   select(replicate, time, rawOD600) %>% 
+#   spread(replicate, rawOD600)
+# 
+# # Day 9:
+# Day9_growthcurver_format <- ancestor_ALE_R1 %>% 
+#   filter(day == 'D9') %>%  
+#   select(replicate, time, rawOD600) %>% 
+#   spread(replicate, rawOD600)
+# 
+# # Day 10:
+# Day10_growthcurver_format <- ancestor_ALE_R1 %>% 
+#   filter(day == 'E10') %>%  
+#   select(replicate, time, rawOD600) %>% 
+#   spread(replicate, rawOD600)
+# 
+# # Calculate dynamics
+# 
+# # Day 0
+# growth_dynamics_0 <- SummarizeGrowthByPlate(Day0_growthcurver_format, bg_correct = 'blank', plot_fit = TRUE, 
+#                                  plot_file = "../manuscript_figures/extra_results/Day0_growthcurver.pdf" )
+# # Day 1
+# growth_dynamics_1 <- SummarizeGrowthByPlate(Day1_growthcurver_format, bg_correct = 'blank', plot_fit = TRUE, 
+#                                  plot_file = "../manuscript_figures/extra_results/Day1_growthcurver.pdf" )
+# # Day 2
+# growth_dynamics_2 <- SummarizeGrowthByPlate(Day2_growthcurver_format, bg_correct = 'blank', plot_fit = TRUE, 
+#                                  plot_file = "../manuscript_figures/extra_results/Day2_growthcurver.pdf" )
+# # Day 3
+# growth_dynamics_3 <- SummarizeGrowthByPlate(Day3_growthcurver_format, bg_correct = 'blank', plot_fit = TRUE, 
+#                                  plot_file = "../manuscript_figures/extra_results/Day3_growthcurver.pdf" )
+# # Day 4
+# growth_dynamics_4 <- SummarizeGrowthByPlate(Day4_growthcurver_format, bg_correct = 'blank', plot_fit = TRUE, 
+#                                  plot_file = "../manuscript_figures/extra_results/Day4_growthcurver.pdf" )
+# # Day 5
+# growth_dynamics_5 <- SummarizeGrowthByPlate(Day5_growthcurver_format, bg_correct = 'blank', plot_fit = TRUE, 
+#                                  plot_file = "../manuscript_figures/extra_results/Day5_growthcurver.pdf" )
+# 
+# # Day 6:
+# growth_dynamics_6 <- SummarizeGrowthByPlate(Day6_growthcurver_format, bg_correct = 'blank', plot_fit = TRUE, 
+#                                  plot_file = "../manuscript_figures/extra_results/Day6_growthcurver.pdf" )
+# 
+# # Day 7:
+# growth_dynamics_7 <- SummarizeGrowthByPlate(Day7_growthcurver_format, bg_correct = 'blank', plot_fit = TRUE, 
+#                                  plot_file = "../manuscript_figures/extra_results/Day7_growthcurver.pdf" )
+# 
+# # Day 8:
+# growth_dynamics_8 <- SummarizeGrowthByPlate(Day8_growthcurver_format, bg_correct = 'blank', plot_fit = TRUE, 
+#                                  plot_file = "../manuscript_figures/extra_results/Day8_growthcurver.pdf" )
+# 
+# # Day 9:
+# growth_dynamics_9 <- SummarizeGrowthByPlate(Day9_growthcurver_format, bg_correct = 'blank', plot_fit = TRUE, 
+#                                  plot_file = "../manuscript_figures/extra_results/Day9_growthcurver.pdf" )
+# 
+# # Day 10:
+# growth_dynamics_10 <- SummarizeGrowthByPlate(Day10_growthcurver_format, bg_correct = 'blank', plot_fit = TRUE, 
+#                                  plot_file = "../manuscript_figures/extra_results/Day10_growthcurver.pdf" )
+# 
+# # Mutate to add day to growth dynamics
+# growth_dynamics_0 <- growth_dynamics_0 %>% mutate(day = 0) %>% filter(sample != '')
+# growth_dynamics_1 <- growth_dynamics_1 %>% mutate(day = 1) %>% filter(sample != '')
+# growth_dynamics_2 <- growth_dynamics_2 %>% mutate(day = 2) %>% filter(sample != '')
+# growth_dynamics_3 <- growth_dynamics_3 %>% mutate(day = 3) %>% filter(sample != '')
+# growth_dynamics_4 <- growth_dynamics_4 %>% mutate(day = 4) %>% filter(sample != '')
+# growth_dynamics_5 <- growth_dynamics_5 %>% mutate(day = 5) %>% filter(sample != '')
+# growth_dynamics_6 <- growth_dynamics_6 %>% mutate(day = 6) %>% filter(sample != '')
+# growth_dynamics_7 <- growth_dynamics_7 %>% mutate(day = 7) %>% filter(sample != '')
+# growth_dynamics_8 <- growth_dynamics_8 %>% mutate(day = 8) %>% filter(sample != '')
+# growth_dynamics_9 <- growth_dynamics_9 %>% mutate(day = 9) %>% filter(sample != '')
+# growth_dynamics_10 <- growth_dynamics_10 %>% mutate(day = 10) %>% filter(sample != '')
+# 
+# # Join growth dynamics across days
+# growth_dynamics_all <- union(growth_dynamics_0, growth_dynamics_1)
+# growth_dynamics_all <- union(growth_dynamics_all, growth_dynamics_2)
+# growth_dynamics_all <- union(growth_dynamics_all, growth_dynamics_3)
+# growth_dynamics_all <- union(growth_dynamics_all, growth_dynamics_4)
+# growth_dynamics_all <- union(growth_dynamics_all, growth_dynamics_5)
+# growth_dynamics_all <- union(growth_dynamics_all, growth_dynamics_6)
+# growth_dynamics_all <- union(growth_dynamics_all, growth_dynamics_7)
+# growth_dynamics_all <- union(growth_dynamics_all, growth_dynamics_8)
+# growth_dynamics_all <- union(growth_dynamics_all, growth_dynamics_9)
+# growth_dynamics_all <- union(growth_dynamics_all, growth_dynamics_10)
+# 
+# 
+# ## PILOT: Plot data from pilot experiment (P1) (don't include in figure)
+# metabolomics_pilot <- metabolomics_metadata_raw %>% filter(replicate == 'P1')
+# metabolomics_pilot <- metabolomics_pilot %>% select(project, replicate, sampleName, sampleNameiLab, species, average_0h_CFU, average_24h_CFU) %>% 
+#   gather(time, CFU_mL, 6:7) %>% 
+#   mutate(CFU_mL_plus_1 = CFU_mL + 1)
+# metabolomics_pilot$time[metabolomics_pilot$time == 'average_0h_CFU'] <- 0
+# metabolomics_pilot$time[metabolomics_pilot$time == 'average_24h_CFU'] <- 24
+# metabolomics_pilot$time <- as.numeric(metabolomics_pilot$time)
+# Fig_CFU_mL_median_pilot <- metabolomics_pilot %>% 
+#   group_by(sampleName, time) %>%
+#   mutate(median_CFU_mL_plus_1 = median(CFU_mL_plus_1), IQ25 = quantile(CFU_mL_plus_1, 0.25), IQ75 = quantile(CFU_mL_plus_1, 0.75)) %>%
+#   ungroup() %>% 
+#   group_by(sampleName) %>% 
+#   ggplot(aes(time, CFU_mL_plus_1, color = sampleNameiLab), color = 'black') + 
+#   geom_point() + 
+#   geom_line() +
+#   #geom_errorbar(aes(x = time, ymin = IQ25, ymax = IQ75), width = 1) +
+#   facet_wrap(~sampleName, nrow = 1) +
+#   theme_pubr() + 
+#   scale_y_log10(limits = c(1, 1e10)) +
+#   ylab('log10(CFU/mL + 1)') + xlab('time (h)')
+# Fig_CFU_mL_median_pilot
+# 
+# Fig_OD600_24h_pilot <- metabolomics_metadata_raw %>% filter(replicate == 'P1') %>% 
+#   group_by(sampleName) %>% 
+#   mutate(median_OD600 = median(OD600_24h), IQ25 = quantile(OD600_24h, 0.25), IQ75 = quantile(OD600_24h, 0.75)) %>% 
+#   ungroup() %>% 
+#   ggplot(aes(sampleName, OD600_24h, color = replicate)) + 
+#   geom_point(alpha = 0.5) + geom_pointrange(aes(y = median_OD600, ymin = IQ25, ymax = IQ75), color = 'black', size = 0.25) +
+#   theme_pubr() +
+#   theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 8), axis.text.y = element_text(size = 14))
+# Fig_OD600_24h_pilot
+
+
+# plot(solPCoA$vectors[,1:2], col = metabolomicsPCoA_classes$speciesCol, pch = 16, xlab=paste('PC 1 (',PCoA_percentVar[1], '%)'),ylab=paste('PC 2 (',PCoA_percentVar[2], '%)'))
+
+# metabolomicsNMDS_dist <- vegdist(metabolomicsNMDS[,-1], method = 'bray')
+# sol <- metaMDS(metabolomicsNMDS_dist, k = 2, trymax = 100)
+# plot(sol)
+# 
+# 
+# metabolome_dist <- vegdist(metabolomicsPCoA[,4:ncol(metabolomicsPCoA)], method='bray') # Bray-Curtis
+# sol <- as.data.frame(metaMDS(metabolome_dist, k=2, trymax=100)$points)
+# plot(sol, col = metabolomicsPCoA_classes$speciesCol)
+
+### C: Bar plot of number of number of metabolites significantly consumed by each strain 
+
+### D: Bar plot of number of metabolites significantly produced by each strain
+
+
+```

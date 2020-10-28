@@ -1,0 +1,29 @@
+ID,OrganismName,Isolate,DrugName,DrugClass,DrugTarget,MIC,Interpretation
+55082376,Staphylococcus aureus,ATCC 29213,Ceftaroline,Cephalosporin,cell_wall_synthesis,0.19,S
+55082376,Staphylococcus aureus,ATCC 29213,Clindamycin,Macrolide,protein_synthesis,0.25,S
+55082376,Staphylococcus aureus,ATCC 29213,Daptomycin,Other,cell_membrane_function,<=0.12,S
+55082376,Staphylococcus aureus,ATCC 29213,Doxycycline,Tetracycline,protein_synthesis,<=0.5,S
+55082376,Staphylococcus aureus,ATCC 29213,Erythromycin,Macrolide,protein_synthesis,0.5,S
+55082376,Staphylococcus aureus,ATCC 29213,Gentamicin,Aminoglycoside,protein_synthesis,<=0.5,S
+55082376,Staphylococcus aureus,ATCC 29213,Levofloxacin,Fluoroquinolone,dna_synthesis,0.25,S
+55082376,Staphylococcus aureus,ATCC 29213,Linezolid,Other,protein_synthesis,4,S
+55082376,Staphylococcus aureus,ATCC 29213,Oxacillin,Beta_Lactam,cell_wall_synthesis,1,S
+55082376,Staphylococcus aureus,ATCC 29213,Penicillin,Beta_Lactam,cell_wall_synthesis,NA,S
+55082376,Staphylococcus aureus,ATCC 29213,Rifampin,Rifamycin,rna_synthesis,<=0.5,S
+55082376,Staphylococcus aureus,ATCC 29213,Tetracycline,Tetracycline,protein_synthesis,<=1,S
+55082376,Staphylococcus aureus,ATCC 29213,TMP_SMZ,Sulfonamide,folic_acid_synthesis,<=10,S
+55082376,Staphylococcus aureus,ATCC 29213,Vancomycin,Other,cell_wall_synthesis,1,S
+55082377,Staphylococcus aureus,USA300,Ceftaroline,Cephalosporin,cell_wall_synthesis,0.38,S
+55082377,Staphylococcus aureus,USA300,Clindamycin,Macrolide,protein_synthesis,0.25,S
+55082377,Staphylococcus aureus,USA300,Daptomycin,Other,cell_membrane_function,1,S
+55082377,Staphylococcus aureus,USA300,Doxycycline,Tetracycline,protein_synthesis,<=0.5,S
+55082377,Staphylococcus aureus,USA300,Erythromycin,Macrolide,protein_synthesis,>=8,R
+55082377,Staphylococcus aureus,USA300,Gentamicin,Aminoglycoside,protein_synthesis,<=0.5,S
+55082377,Staphylococcus aureus,USA300,Levofloxacin,Fluoroquinolone,dna_synthesis,>=8,R
+55082377,Staphylococcus aureus,USA300,Linezolid,Other,protein_synthesis,2,S
+55082377,Staphylococcus aureus,USA300,Oxacillin,Beta_Lactam,cell_wall_synthesis,>=4,R
+55082377,Staphylococcus aureus,USA300,Penicillin,Beta_Lactam,cell_wall_synthesis,NA,R
+55082377,Staphylococcus aureus,USA300,Rifampin,Rifamycin,rna_synthesis,<=0.5,S
+55082377,Staphylococcus aureus,USA300,Tetracycline,Tetracycline,protein_synthesis,<=1,S
+55082377,Staphylococcus aureus,USA300,TMP_SMZ,Sulfonamide,folic_acid_synthesis,<=10,S
+55082377,Staphylococcus aureus,USA300,Vancomycin,Other,cell_wall_synthesis,1,S

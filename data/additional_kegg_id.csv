@@ -1,0 +1,164 @@
+Name,Formula,Molecular Weight,RT [min],KEGG_ID_New,KEGG_ID_Found
+(+/-)-threo-Methylnaphthidate,C18 H21 N O2,283.15717,10.55,NA,No
+"(1H-Indol-3-yl)(2,2,3,3-tetramethylcyclopropyl)methanone",C16 H19 N O,241.14666,10.403,NA,No
+"(1R,3R,4S,5R)-3,4-bis({[(2E)-3-(3,4-dihydroxyphenyl)prop-2-enoyl]oxy})-1,5-dihydroxycyclohexane-1-carboxylic acid",C25 H24 O12,498.12035,10.913,NA,No
+"(2R)-2-[(2R,5S)-5-[(2S)-2-hydroxybutyl]oxolan-2-yl]propanoic acid",C11 H20 O4,216.13617,10.392,NA,No
+(3R)-beta-Leucine,C6 H13 N O2,131.09485,2.146,C02486,Yes
+"(3S,9aS)-3-benzyl-octahydro-1H-pyrido[1,2-a]pyrazin-1-one",C15 H20 N2 O,244.15749,10.561,NA,No
+(6Z)-Octadecenoicacid,C18 H34 O2,282.25594,10.838,C08363,Yes
+?-Aspartylphenylalanine,C13 H16 N2 O5,280.10606,5.279,NA,No
+?-Linolenoyl ethanolamide,C20 H35 N O2,152.1188,10.708,NA,No
+[FAamino(5:0)]2S-amino-pentanoicacid,C5 H11 N O2,117.0792,1.22,NA,Maybe C00431
+[FAoxo_amino(6:0)]3-oxo-5S-amino-hexanoicacid,C6 H11 N O3,145.07416,4.513,NA,Maybe C03656
+"1-(1,3,3-Trimethyl-2,3-dihydro-1H-indol-2-yliden)acetone",C14 H17 N O,215.131,10.126,NA,No
+"1-(2,4-Dihydroxyquinolin-3-yl)ethan-1-one",C11 H9 N O3,203.05828,5.577,NA,No
+"1-(4-Methylphenyl)pyrrolidine-2,5-dione",C11 H11 N O2,189.07895,8.706,NA,No
+"1-(Benzylamino)-3-(3,4-dimethylphenoxy)propan-2-ol",C18 H23 N O2,285.17298,10.274,NA,No
+1(2H)-Isoquinolinone,C9 H7 N O,145.05266,5.382,C06324,Yes
+"1,3-Dihydro-1,3,3-trimethyl-2H-indol-2-ylidene acetaldehyde",C13 H15 N O,201.11539,9.044,NA,No
+"1,3,4,10-Tetrahydro-9(2H)-acridinone",C13 H13 N O,199.09971,9.241,NA,No
+"1,3,4,10-Tetrahydro-9(2H)-acridinone",C13 H13 N O,199.10004,9.234,NA,No
+1_2-Diaminobenzene,C6 H8 N2,108.06881,1.771,NA,No
+1_4-Lactone,C4 H6 O2,86.03694,2.219,NA,No
+10-Oxodecanoate,C10 H18 O3,186.12587,10.474,C02217,Yes
+2'-Deoxyadenosine 5'-monophosphate (dAMP),C10 H14 N5 O6 P,331.06853,2.345,C00360,Yes
+2'-Deoxycytidine 5'-monophosphate (dCMP),C9 H14 N3 O7 P,307.05727,1.541,C00239,Yes
+2'-Deoxyguanosine 5'-monophosphate (dGMP),C10 H14 N5 O7 P,347.06335,2.548,C00362,Yes
+2-({2-[4-(4-Fluorophenyl)piperazino]-2-oxoethyl}sulfanyl)acetic acid,C14 H17 F N2 O3 S,312.0965,10.632,NA,No
+2-(2-amino-3-methylbutanamido)-3-phenylpropanoic acid,C14 H20 N2 O3,264.14748,5.848,NA,No
+"2-(4-hydroxy-1,3-thiazol-2-yl)-1-phenylethan-1-one",C11 H9 N O2 S,219.03543,10.118,NA,No
+2-(4-Methoxybenzylidene)quinuclidin-3-one,C15 H17 N O2,243.12592,10.315,NA,No
+2-(acetylamino)-4-(methylthio)butanoic acid,C7 H13 N O3 S,191.06189,4.927,NA,No
+2-(Acetylamino)hexanoic acid,C8 H15 N O3,173.10545,6.874,NA,No
+"2-(Methylamino)-2,3-dihydro-1H-benzo[de]isoquinoline-1,3-dione",C13 H10 N2 O2,226.07428,4.607,NA,No
+2-[(Dimethylamino)methylidene]indan-1-one,C12 H13 N O,187.09968,8.104,NA,No
+2-Acetamidophenol,C8 H9 N O2,151.06327,5.552,NA,No
+2-Amino-4-methylpyrimidine,C5 H7 N3,109.06402,0.882,NA,No
+2-Aminooctanedioic acid,C8 H15 N O4,189.10005,1.267,NA,No
+2-benzyl-6-hydroxy-2-azabicyclo[2.2.2]octan-3-one,C14 H17 N O2,231.12593,10.295,NA,No
+2-cyano-3-(4-hydroxyphenyl)acrylamide,C10 H8 N2 O2,188.05853,7.087,NA,No
+2-cyano-3-(4-hydroxyphenyl)acrylamide,C10 H8 N2 O2,188.05889,7.086,NA,No
+2-Heptyl-4-hydroxyquinoline-N-oxide,C16 H21 N O2,259.15714,10.867,C04284,Yes
+2-Hydroxy-2-methylbutyric acid,C5 H10 O3,118.06319,4.517,NA,No
+2-Hydroxy-2-methylbutyronitrile,C5 H9 N O,99.06849,3.549,NA,No
+2-Hydroxy-4'-(2-hydroxyethoxy)-2-methylpropiophenone,C12 H16 O4,224.10246,10.232,NA,No
+2-Hydroxy-4-methylthiobutanoic acid,C5 H10 O3 S,150.0353,4.408,NA,No
+2-Hydroxy glutaric acid,C5 H8 O5,148.03739,1.578,C02630,Yes
+2-Hydroxycaproic acid,C6 H12 O3,132.07884,6.683,NA,No
+2-Hydroxynicotinic acid,C6 H5 N O3,139.02722,3,NA,No
+2-Hydroxyphenylalanine,C9 H11 N O3,181.07378,3.246,NA,No
+2-Hydroxyvaleric acid,C5 H10 O3,118.06323,4.375,NA,No
+2-Mercaptoethanol,C2 H6 O S,78.0141,1.309,C00928,Yes
+2-oxo-1_2-dihydroquinoline-4-carboxylate,C10 H7 N O3,189.04248,7.086,C16715,Yes
+2-Phenylglycine,C8 H9 N O2,151.06322,3.739,NA,No
+"2,2,6,6-Tetramethyl-1-piperidinol (TEMPO)",C9 H19 N O,157.14656,10.282,NA,No
+"2,3,4,9-Tetrahydro-1H-?-carboline-3-carboxylic acid",C12 H12 N2 O2,216.08993,5.644,NA,No
+3-[(dimethylamino)methylene]-1H-2-benzothiopyran-4(3H)-one,C12 H13 N O S,219.07179,8.363,NA,No
+3-[1-(dimethylamino)-1H-pyrrol-2-yl]-2-(2-furylcarbonyl)acrylonitrile,C14 H13 N3 O2,255.10076,6.211,NA,No
+"3-Desoxy-3,4-methylenedioxy pyrovalerone",C17 H23 N O2,273.17299,10.577,NA,No
+3-Hydroxy-3-methylbutanoic acid,C5 H10 O3,118.0632,3.364,NA,No
+3-Hydroxy-5-(hydroxymethyl)-2-methylisonicotinaldehyde oxime,C8 H10 N2 O3,182.06904,2.943,NA,No
+3-Hydroxydecanoic acid,C10 H20 O3,188.14146,10.371,NA,No
+3-Hydroxypropenoate,C3 H4 O3,88.01619,1.309,NA,No
+3-Indolebutyricacid,C12 H13 N O2,203.09468,9.612,C11284,Yes
+3-Methyl-quinolin-2-ol,C10 H9 N O,159.06836,6.141,NA,No
+3-Methyl-quinolin-2-ol,C10 H9 N O,159.06867,6.135,NA,No
+3-oxoindane-1-carboxylic acid,C10 H8 O3,176.04726,10.253,NA,No
+3-tert-Butyladipic acid,C10 H18 O4,202.12076,10.065,NA,No
+"3,3,5,5-Tetramethylpyrroline-N-oxide",C8 H15 N O,141.11532,8.039,NA,No
+"3,5-di-tert-Butyl-4-hydroxybenzaldehyde",C15 H22 O2,234.16195,10.556,NA,No
+"4-(2-hydroxyphenyl)-8,9-dimethyl-2,3-dihydro-1H-1,5-benzodiazepin-2-one",C17 H16 N2 O2,280.12124,10.213,NA,No
+4-(4-Cyclohexylanilino)-4-oxobut-2-enoic acid,C16 H19 N O3,273.1368,10.04,NA,No
+"4-(allyloxy)-1,2-dihydroquinolin-2-one",C12 H11 N O2,201.07905,9.492,NA,No
+4-(octyloxy)benzoic acid,C15 H22 O3,250.15713,10.889,NA,No
+"4-[4-phenyl-3,6-dihydro-1(2H)-pyridinyl]butanoic acid hydrochloride",C15 H19 N O2,245.14153,10.408,NA,No
+4-Coumarylalcohol(4-Hydroxycoumarin),C9 H6 O3,162.03165,9.48,NA,No
+4-Dodecylbenzenesulfonic acid,C18 H30 O3 S,326.1919,12.95,NA,No
+4-Ethoxy ethylbenzoate,C11 H14 O3,194.09418,10.515,NA,No
+4-Hydroxypropranolol,C16 H21 N O3,275.15224,10.281,NA,No
+4-Methoxysalicylic acid,C8 H8 O4,168.04257,3.196,NA,No
+4-Morpholinepropanesulfonic acid,C7 H15 N O4 S,209.07203,1.005,NA,No
+"4-phenyl-6-(2-thienyl)-2,3,4,5-tetrahydropyridazin-3-one",C14 H12 N2 O S,256.06691,9.995,NA,No
+5-(2-Thienyl)nicotinic acid,C10 H7 N O2 S,205.01976,10.123,NA,No
+5-[4-(2-furylcarbonyl)piperazino]-5-oxo-3-phenylpentanoic acid,C20 H22 N2 O5,370.15341,9.647,NA,No
+5-Valerolactone,C5 H8 O2,100.05252,3.26,C02240,Yes
+"6-(2-chloroanilino)-4-oxo-2-(4-pyridyl)-3,4-dihydro-2H-1,3-thiazine-5-carbonitrile",C16 H11 Cl N4 O S,342.28781,10.514,NA,No
+"6-hydroxy-4-methyl-2-phenyl-2,3-dihydropyridazin-3-one",C11 H10 N2 O2,202.07432,8.716,NA,No
+6-Methoxyquinoline N-oxide,C10 H9 N O2,175.06327,7.494,NA,No
+6-Methylquinoline,C10 H9 N,143.07344,5.644,NA,No
+"6,7-dihydro-5H-dibenzo[d,f][1,3]diazepin-6-one",C13 H10 N2 O,210.07928,4.655,NA,No
+"7,7-dimethyl-3-spiro(4,4,-dimethyl-2,6-dioxocyclohexyl)-1,2,3,4,5,6,7,8-octahydro-5-quinolinone",C18 H25 N O3,303.18335,10.467,NA,No
+9-Methyluric acid,C6 H6 N4 O3,182.04426,2.272,NA,No
+Acetylarginine,C8 H16 N4 O3,216.12229,1.452,NA,No
+Acetylarginine,C8 H16 N4 O3,216.12269,1.444,NA,No
+allopurinol,C5 H4 N4 O,136.03851,3.183,D00224,Yes
+Alpha-Hydroxyisobutyric acid,C4 H8 O3,104.04754,2.514,NA,No
+BB-22 3-Carboxyindole metabolite,C16 H19 N O2,257.14167,9.791,NA,No
+Bis(2-ethylhexyl) phthalate,C24 H38 O4,390.27667,11.941,C03690,Yes
+"Bis(3,5,5-trimethylhexyl) phthalate",C26 H42 O4,418.30787,12.527,NA,No
+Butylparaben,C11 H14 O3,194.09441,10.279,D01420,Yes
+Citramalic acid,C5 H8 O5,148.03741,2.251,C00815,Yes
+Citroflex A-4,C20 H34 O8,402.22487,10.699,NA,No
+D-(+)-Pipecolinic acid,C6 H11 N O2,129.07893,1.289,NA,No
+Desomorphine,C17 H21 N O2,271.1573,10.524,NA,No
+DL-4-Hydroxyphenyllactic acid,C9 H10 O4,182.05825,5.11,NA,No
+DL-Lactic Acid,C3 H6 O3,90.0319,4.225,C01432,Yes
+Docosanamide,C22 H45 N O,339.34985,13.344,NA,No
+Dodecyl sulfate,C12 H26 O4 S,266.15553,10.812,NA,No
+Erucamide,C22 H43 N O,337.33428,12.502,NA,No
+Ethylmalonic acid,C5 H8 O4,132.04244,3.199,NA,No
+Hexadecanamide,C16 H33 N O,255.25629,11.185,NA,No
+Hexadecanoicacid,C16 H32 O2,256.24039,11.747,C00249,Yes
+Imidazosagatriazinone,C17 H20 N4 O2,312.15483,10.262,NA,No
+Indole-2-carboxylic acid,C9 H7 N O2,161.04793,8.481,NA,No
+Indole-3-acrylic acid,C11 H9 N O2,187.06323,4.885,NA,No
+Isobutyl benzoate,C11 H14 O2,178.09931,10.378,NA,No
+Lumichrome,C12 H10 N4 O2,242.08044,9.715,C01727,Yes
+Maleic acid,C4 H4 O4,116.01115,2.004,C01384,Yes
+Methionine sulfoxide,C5 H11 N O3 S,165.04586,0.917,NA,No
+Methyl 2-[(2-methoxy-2-oxoethyl)amino]acetate,C6 H11 N O4,161.06873,1.915,NA,No
+Mevalonic acid,C6 H12 O4,148.07377,2.439,C00418,Yes
+Monobutyl phthalate,C12 H14 O4,222.08938,10.209,NA,No
+Myristyl sulfate,C14 H30 O4 S,294.18698,13.499,NA,No
+N-(1H-benzo[d]imidazol-2-yl)guanidine,C8 H9 N5,175.08486,2.202,NA,No
+N-(2-Methoxyphenyl)acetamide,C9 H11 N O2,165.07879,2.717,NA,No
+N-(9-oxodecyl)acetamide,C12 H23 N O2,213.17286,10.166,NA,No
+N-Acetyl-DL-alanine,C5 H9 N O3,131.05851,1.937,NA,No
+N-Acetyl-DL-serine,C5 H9 N O4,147.05308,1.212,NA,No
+N-Acetyl-DL-serine,C5 H9 N O4,147.05335,1.203,NA,No
+N-Acetyl-L-carnosine,C11 H16 N4 O4,268.11724,1.532,NA,No
+N-Acetyl-L-glutamine,C7 H12 N2 O4,188.08008,1.427,NA,No
+N-Acetylalanine,C5 H9 N O3,131.05845,2.29,NA,No
+N-Acetylglycine,C4 H7 N O3,117.04279,1.267,NA,No
+N-Acetylvaline,C7 H13 N O3,159.08979,3.957,NA,No
+N-Methylcaprolactam,C7 H13 N O,127.09967,6.878,NA,No
+"N,N-Diethylethanolamine",C6 H15 N O,117.11535,1.165,NA,No
+"N,N-dimethyl-9H-purin-6-amine",C7 H9 N5,163.08573,3.426,NA,No
+N1-(2-{2-[2-(acetylamino)phenoxy]ethoxy}phenyl)acetamide,C18 H20 N2 O4,328.1422,6.496,NA,No
+N1-(4-butyl-2-methylphenyl)-2-(benzylamino)-2-thioxoacetamide,C20 H24 N2 O S,340.16144,5.008,NA,No
+"N1-(5-oxo-5,6,7,8-tetrahydronaphthalen-2-yl)acetamide",C12 H13 N O2,203.09466,9.798,NA,No
+N1-bicyclo[2.2.2]oct-2-ylbenzamide,C15 H19 N O,229.14671,10.291,NA,No
+N5-(L-1-Carboxyethyl)-L-ornithine,C8 H16 N2 O4,204.11099,1.926,C04210,Yes
+"N6-[(5-nitro-2-thienyl)methylidene]-2,3-dihydro-1,4-benzodioxin-6-amine",C13 H10 N2 O4 S,290.03624,4.011,NA,No
+Norbutorphanol,C16 H21 N O2,259.15727,9.926,NA,No
+Norepinephrine(Noradrenaline),C8 H11 N O3,169.07384,2.937,C00547,Yes
+Norketamine,C12 H14 Cl N O,223.07461,10.061,NA,No
+NP-002223,C13 H13 N O2,215.09467,9.961,NA,No
+NP-003319,C11 H14 N4 O4 S,298.0735,5.581,NA,No
+NP-016455,C11 H18 N2 O4,242.12665,3.944,NA,No
+NP-016455,C11 H18 N2 O4,242.12692,2.418,NA,No
+Octadecanoicacid,C18 H36 O2,284.27178,12.451,C01530,Yes
+Paraquat,C12 H14 N2,186.11568,4.574,C14701,Yes
+PB-22 N-(4-Hydroxypentyl)-3-carboxyindole metabolite,C14 H17 N O3,247.12096,9.879,NA,No
+Perfluoroctanoic acid (PFOA),C8 H F15 O2,413.97423,12.254,NA,No
+phenazine-2-carboxylic acid,C13 H8 N2 O2,224.05861,10.166,NA,No
+Phosphoric acid,H3 O4 P,97.977,1.121,C00009,Yes
+Phytosphingosine;D-Ribo-2-amino-1_3_4-Octadecanetriol,C18 H39 N O3,317.29282,10.307,C12144,Yes
+tert-Butyl N-[1-(aminocarbonyl)-3-methylbutyl]carbamate,C11 H22 N2 O3,230.16306,4.511,NA,No
+Tolycaine,C15 H22 N2 O3,278.16318,6.969,NA,No
+trans-3-Hexenoic acid,C6 H10 O2,114.06795,2.027,NA,No
+Triisopropanolamine,C9 H21 N O3,191.15207,1.382,NA,No
+Triphenylphosphine oxide,C18 H15 O P,278.08607,10.303,NA,No
+Tyrosylalanine,C12 H16 N2 O4,252.11101,2.804,NA,No
+Uridine monophosphate (UMP),C9 H13 N2 O9 P,324.03622,1.373,C00105,Yes
+Xylenesulfonate,C8 H10 O3 S,186.03541,6.712,NA,No
