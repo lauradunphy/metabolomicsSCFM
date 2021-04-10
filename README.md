@@ -3,7 +3,7 @@
 Data, code, and figures from Dunphy et al
 
 Code:
--dunphy_et_al_manuscript.Rmd -> Includes data processing and figure generation
+- dunphy_et_al_manuscript.Rmd -> Includes data processing and figure generation
 
 
 figures_and_supplement: Includes all main and supplementary figures as well as supplementary data
